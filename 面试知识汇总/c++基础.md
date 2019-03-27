@@ -25,6 +25,16 @@ STL一共给我们提供了四种智能指针：auto_ptr、unique_ptr、shared_p
 
 ## 2.迭代器类型
 
+共有五类迭代器：Input Iterator ,Output Iterator,Forwaed Iterator,Bidirectional Iterator,Random Access Iterator.
+
+- 输入迭代器（Input Iterator）：通过对输入迭代器解除引用，它将引用对象，而对象可能位于集合中。最严格的输入迭代只能以只读方式访问对象。例如：istream。
+- 输出迭代器（Output Iterator）：该类迭代器和Input Iterator极其相似，也只能单步向前迭代元素，不同的是该类迭代器对元素只有写的权力。例如：ostream, inserter。
+以上两种基本迭代器可进一步分为三类：
+- 前向迭代器（Forward Iterator）：该类迭代器可以在一个正确的区间中进行读写操作，它拥有Input Iterator的所有特性，和Output Iterator的部分特性，以及单步向前迭代元素的能力。
+- 双向迭代器（Bidirectional Iterator）：该类迭代器是在Forward Iterator的基础上提供了单步向后迭代元素的能力。例如：list, set, multiset, map, multimap。
+- 随机迭代器（Random Access Iterator）：该类迭代器能完成上面所有迭代器的工作，它自己独有的特性就是可以像指针那样进行算术计算，而不是仅仅只有单步向前或向后迭代。例如：vector, deque, string, array。
+
+
 ## 3.深拷贝和浅拷贝
 
 对于build-in类型来说，复制是简单的，都是开辟新的内存，将对应的值放入新开辟的位置即可，之后他们不再有关系（指针类型就是地址的复制，和指向的地方没关系）。
@@ -227,6 +237,28 @@ A、B、C的sizeof分别是8,12,12。
 
 ## 10.Vector底层实现
 
+1. vector的数据结构
+    vector 的数据结构为线性连续空间。迭代器start和finish分别指向配置来的连续空间中目前已经被使用的范围，end_of_storage指向整个连续空间的（包含备用空间）的尾端。
+
+    ```c
+    template <class T,class Alloc = clloc>
+    class vector{
+    ...
+    protected:
+        iterator start;
+        iterator end;
+        iterator end_of_storage;
+    }
+    ```
+
+2. vector中的size表示当前实际数据数量，capacity 则表示当前可容纳的数量，即已开辟的内存。
+3. 释放(pop_back)、删除(erase) 和 清空(clear) 只会改变size，不会改变capacity 。只有在vector析构的时候才会清空所有内存。
+4. 追加(push_back)、 插入(insert)等操作首先使用备用空间，当发现备用空间小于“新增元素个数”就需要扩展空间。扩展后的空间大小为：旧长度的两倍或旧长度+新增元素个数（或者说是增加max(oldsize,n)。
+5. 扩容时的操作流程为：开辟新内存 -> copy数据 -> 释放旧内存。因此频繁的导致vector扩容(如for循环持续push_back)会使得程序效率降低。因此，如有需要，可以提前通过初始化或者resize、reserve来预先开辟较大的容量。
+6. 如果想要提前释放掉vector开辟的内存，可以使其与一个空vector进行交换。
+    这是因为vector的拷贝构造函数和operator=函数只拷贝begin()到end()的部分，end()到start+end_of_storage部分不会拷贝；而swap函数是原样拷贝，包括capacity部分都会考过来。平时vector的空间是只增不减的，clear()函数只析构，不释放空间。因此只能用swap函数来释放了。swap之后临时的那个vector应该释放掉，方法是放在花括号中，放在函数中，或者最强大的——用临时对象。并且，用他本身去初始化该临时对象，于是，swap后，vector的容量就等于size，没有多余的空间。
+7. vector支持速记存取，提供的是Random Access Iterator.
+
 ## 11.预编译
 
 ## 12.用c实现继承和多重继承
@@ -248,3 +280,7 @@ A、B、C的sizeof分别是8,12,12。
 - 多态
 
 通过覆盖的方法来实现，将子类中的父类对象的函数指针指向另一个不同的函数。
+
+## 13.map和unordered_map区别
+
+    STL中，map 对应的数据结构是 红黑树。红黑树是一种近似于平衡的二叉查找树，里面的数据是有序的。在红黑树上做查找操作的时间复杂度为 O(logN)。而 unordered_map 对应哈希表，哈希表的特点就是查找效率高，时间复杂度为常数级别 O(1)， 而额外空间复杂度则要高出许多。所以对于需要高效率查询的情况，使用 unordered_map 容器。而如果对内存大小比较敏感或者数据存储要求有序的话，则可以用 map 容器。

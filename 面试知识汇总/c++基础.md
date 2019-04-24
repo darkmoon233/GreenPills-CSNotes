@@ -10,8 +10,8 @@
   - [7.虚函数、纯虚函数](#7-虚函数纯虚函数)
   - [8. 引用和指针的区别](#8-引用和指针的区别)
   - [9.字节对齐](#9字节对齐)
-  - [10.Vector底层实现](#10vector底层实现)auto
-  - [11.预编译](#11预编译)auto
+  - [10.Vector底层实现](#10vector底层实现)
+  - [11.预编译](#11预编译)
   - [12.用c实现继承和多重继承](#12用c实现继承和多重继承)
   - [13.map和unordered_map区别](#13map和unordered_map区别)
 
@@ -21,10 +21,151 @@
 
 将基本类型指针封装为类对象指针（这个类肯定是个模板，以适应不同基本类型的需求），并在析构函数里编写delete语句删除指针指向的内存空间。
 
-STL一共给我们提供了四种智能指针：auto_ptr、unique_ptr、shared_ptr和weak_ptr（本文章暂不讨论）。
-模板auto_ptr是C++98提供的解决方案，C+11已将将其摒弃，并提供了另外两种解决方案。然而，虽然auto_ptr被摒弃，但它已使用了好多年：同时，如果您的编译器不支持其他两种解决力案，auto_ptr将是唯一的选择。
+STL一共给我们提供了四种智能指针：auto_ptr、unique_ptr、shared_ptr和weak_ptr。
+模板auto_ptr是C++98提供的解决方案，C+11已将将其摒弃，并提供了另外两种解决方案。
 
-- shared_ptr
+智能指针需要引入头文件`#include <memory>`。智能指针的构造函数都是用explicit关键字修饰的，即不允许隐式的转换，必须显示调用构造函数。
+
+### 1.auto_ptr
+
+auto_ptr的思路是很简单的，它仅有一个成员变量`_Myptr`，即指定的类型的指针，该指针在auto_ptr初始化时被赋值，当auto_ptr对象被析构的时候将该指针被delete。同时auto_ptr为了保证自身的安全性，需要拥有其指向的对象的指针的所有权，因此他的赋值构造函数和重载的`=`函数都会将传入的指针置为NULL。
+
+```c
+template<class _Ty>
+    class auto_ptr
+    {   // wrap an object pointer to ensure destruction
+public:
+    typedef _Ty element_type;
+
+    explicit auto_ptr(_Ty * _Ptr = 0) _NOEXCEPT
+        : _Myptr(_Ptr)
+        {   // construct from object pointer
+    }
+
+    auto_ptr(auto_ptr& _Right) _NOEXCEPT
+        : _Myptr(_Right.release())
+        {   // construct by assuming pointer from _Right auto_ptr
+        }
+
+    auto_ptr(auto_ptr_ref<_Ty> _Right) _NOEXCEPT
+        {   // construct by assuming pointer from _Right auto_ptr_ref
+        _Ty * _Ptr = _Right._Ref;
+        _Right._Ref = 0;    // release old
+        _Myptr = _Ptr;  // reset this
+        }
+
+    template<class _Other>
+        operator auto_ptr<_Other>() _NOEXCEPT
+        {   // convert to compatible auto_ptr
+        return (auto_ptr<_Other>(*this));
+        }
+
+    template<class _Other>
+        operator auto_ptr_ref<_Other>() _NOEXCEPT
+        {   // convert to compatible auto_ptr_ref
+        _Other * _Cvtptr = _Myptr;  // test implicit conversion
+        auto_ptr_ref<_Other> _Ans(_Cvtptr);
+        _Myptr = 0;    // pass ownership to auto_ptr_ref
+         return (_Ans);
+        }
+
+    template<class _Other>
+        auto_ptr& operator=(auto_ptr<_Other>& _Right) _NOEXCEPT
+        {   // assign compatible _Right (assume pointer)
+        reset(_Right.release());
+        return (*this);
+        }
+
+    template<class _Other>
+        auto_ptr(auto_ptr<_Other>& _Right) _NOEXCEPT
+        : _Myptr(_Right.release())
+        {   // construct by assuming pointer from _Right
+        }
+
+    auto_ptr& operator=(auto_ptr& _Right) _NOEXCEPT
+        {    // assign compatible _Right (assume pointer)
+        reset(_Right.release());
+        return (*this);
+        }
+
+    auto_ptr& operator=(auto_ptr_ref<_Ty> _Right) _NOEXCEPT
+        {    // assign compatible _Right._Ref (assume pointer)
+        _Ty * _Ptr = _Right._Ref;
+        _Right._Ref = 0;    // release old
+        reset(_Ptr);    // set new
+        return (*this);
+        }
+
+    ~auto_ptr() _NOEXCEPT
+        {    // destroy the object
+        delete _Myptr;
+        }
+
+    _Ty& operator*() const _NOEXCEPT
+        {    // return designated value
+ #if _ITERATOR_DEBUG_LEVEL == 2
+        if (_Myptr == 0)
+            {
+            _DEBUG_ERROR("auto_ptr not dereferencable");
+            }
+ #endif /* _ITERATOR_DEBUG_LEVEL == 2 */
+
+        return (*get());
+        }
+
+    _Ty * operator->() const _NOEXCEPT
+        {    // return pointer to class object
+ #if _ITERATOR_DEBUG_LEVEL == 2
+        if (_Myptr == 0)
+            {
+            _DEBUG_ERROR("auto_ptr not dereferencable");
+            }
+ #endif /* _ITERATOR_DEBUG_LEVEL == 2 */
+
+        return (get());
+        }
+
+    _Ty * get() const _NOEXCEPT
+        {    // return wrapped pointer
+        return (_Myptr);
+        }
+
+    _Ty * release() _NOEXCEPT
+        {    // return wrapped pointer and give up ownership
+        _Ty * _Tmp = _Myptr;
+        _Myptr = 0;
+        return (_Tmp);
+        }
+
+    void reset(_Ty * _Ptr = 0)
+        {    // destroy designated object and store new pointer
+        if (_Ptr != _Myptr)
+            delete _Myptr;
+        _Myptr = _Ptr;
+        }
+
+private:
+    _Ty * _Myptr;    // the wrapped object pointer
+    };
+
+```
+
+auto_ptr提供了三种方法。
+
+1. `get()`方法，获取当前指针。
+2. `release()`方法，返回当前指针指向，并将当前`_Myptr`置为`NULL`.
+3. `reset(_Ty * _Ptr = 0)`方法，回收当前指针指向的内存，并将`_Myptr`置为传入的参数，可以不传入参数。
+
+使用auto_ptr需要注意：
+
+1. auto_ptr不能共享所有权，因为复制构造函数和重载=会释放传入值的控制权。
+2. auto_ptr不能指向数组，因为auto_ptr在析构的时候只是调用delete,而数组应该要调用delete[]。
+3. auto_ptr不能作为容器的成员，因为标准库的容器要求对象是可拷贝的，但是auto_ptr的拷贝是会影响原有对象的。
+4. auto_ptr必须使用构造函数来初始化,`auto_ptr<int>p = new int(2);`这种语法是不允许的，因为auto_ptr的构造函数被声明为explicit。
+
+
+### 2.shared_ptr
+
     当多个shared_ptr管理同一个指针，仅当最后一个shared_ptr析构时，指针才被delete。引用计数指的是，所有管理同一个裸指针（raw pointer）的shared_ptr，都共享一个引用计数器，每当一个shared_ptr被赋值（或拷贝构造）给其它shared_ptr时，这个共享的引用计数器就加1，当一个shared_ptr析构或者被用于管理其它裸指针时，这个引用计数器就减1，如果此时发现引用计数器为0，那么说明它是管理这个指针的最后一个shared_ptr了，于是我们释放指针指向的资源。
 
 ## 2.迭代器类型
@@ -288,3 +429,50 @@ A、B、C的sizeof分别是8,12,12。
 ## 13.map和unordered_map区别
 
     STL中，map 对应的数据结构是 红黑树。红黑树是一种近似于平衡的二叉查找树，里面的数据是有序的。在红黑树上做查找操作的时间复杂度为 O(logN)。而 unordered_map 对应哈希表，哈希表的特点就是查找效率高，时间复杂度为常数级别 O(1)， 而额外空间复杂度则要高出许多。所以对于需要高效率查询的情况，使用 unordered_map 容器。而如果对内存大小比较敏感或者数据存储要求有序的话，则可以用 map 容器。
+
+## 14.explicit 关键字
+
+在类的定义中允许使用多种方式进行构造函数的调用。如
+
+```c
+struct A
+{
+    A(int) { }      // 转换构造函数
+    A(int, int) { } // 转换构造函数 (C++11)
+    operator bool() const { return true; }
+};
+int main()
+{
+    A a1 = 1;      // OK ：复制初始化选择 A::A(int)
+    A a2(2);       // OK ：直接初始化选择 A::A(int)
+    A a3 {4, 5};   // OK ：直接列表初始化选择 A::A(int, int)
+    A a4 = {4, 5}; // OK ：复制列表初始化选择 A::A(int, int)
+    A a5 = (A)1;   // OK ：显式转型进行 static_cast
+}
+```
+
+`A a1 = 1;`相当于`A temp(1); a(temp);`调用了构造函数创建了temp对象，再通过复制构造函数进行对a1的构造。
+`A a2(2);`就是直接调用构造函数。
+`A a3 {4, 5};`直接调用构造函数`A a3(4,5);`。
+`A a4 = {4, 5};`相当于`A temp(4,5); a(temp);`
+
+这其中可以看出编译器背着你做了很多工作，从而使得类的构造更容易。但是这种隐式的转换也可能带来问题，比如当一个类只接受整形和字符串类型时，可能因为'c'和“c”错误导致调用了不同的构造函数（因为'c'可以认为是整数99）。这种错误难以发现也难以避免，可以通过explicit关键字的形式声明构造函数，从而指定构造函数或转换函数 (C++11 起)为显式，即它不能用于隐式转换和复制初始化。
+
+```c
+struct B
+{
+    explicit B(int) { }
+    explicit B(int, int) { }
+    explicit operator bool() const { return true; }
+};
+ 
+int main()
+{
+//  B b1 = 1;      // 错误：复制初始化不考虑 B::B(int)
+    B b2(2);       // OK ：直接初始化选择 B::B(int)
+    B b3 {4, 5};   // OK ：直接列表初始化选择 B::B(int, int)
+//  B b4 = {4, 5}; // 错误：复制列表初始化不考虑 B::B(int,int)
+    B b5 = (B)1;   // OK ：显式转型进行 static_cast
+```
+
+参考<https://zh.cppreference.com/w/cpp/language/explicit>

@@ -30,7 +30,7 @@ STL一共给我们提供了四种智能指针：auto_ptr、unique_ptr、shared_p
 
 auto_ptr的思路是很简单的，它仅有一个成员变量`_Myptr`，即指定的类型的指针，该指针在auto_ptr初始化时被赋值，当auto_ptr对象被析构的时候将该指针被delete。同时auto_ptr为了保证自身的安全性，需要拥有其指向的对象的指针的所有权，因此他的赋值构造函数和重载的`=`函数都会将传入的指针置为NULL。
 
-```c
+```cpp
 template<class _Ty>
     class auto_ptr
     {   // wrap an object pointer to ensure destruction
@@ -163,11 +163,404 @@ auto_ptr提供了三种方法。
 3. auto_ptr不能作为容器的成员，因为标准库的容器要求对象是可拷贝的，但是auto_ptr的拷贝是会影响原有对象的。
 4. auto_ptr必须使用构造函数来初始化,`auto_ptr<int>p = new int(2);`这种语法是不允许的，因为auto_ptr的构造函数被声明为explicit。
 
-
 ### 2.shared_ptr
 
-    当多个shared_ptr管理同一个指针，仅当最后一个shared_ptr析构时，指针才被delete。引用计数指的是，所有管理同一个裸指针（raw pointer）的shared_ptr，都共享一个引用计数器，每当一个shared_ptr被赋值（或拷贝构造）给其它shared_ptr时，这个共享的引用计数器就加1，当一个shared_ptr析构或者被用于管理其它裸指针时，这个引用计数器就减1，如果此时发现引用计数器为0，那么说明它是管理这个指针的最后一个shared_ptr了，于是我们释放指针指向的资源。
+当多个shared_ptr管理同一个指针，仅当最后一个shared_ptr析构时，指针才被delete。引用计数指的是，所有管理同一个裸指针（raw pointer）的shared_ptr，都共享一个引用计数器，每当一个shared_ptr被赋值（或拷贝构造）给其它shared_ptr时，这个共享的引用计数器就加1，当一个shared_ptr析构或者被用于管理其它裸指针时，这个引用计数器就减1，如果此时发现引用计数器为0，那么说明它是管理这个指针的最后一个shared_ptr了，于是我们释放指针指向的资源。
 
+```cpp
+template<class _Ty>
+    class shared_ptr
+        : public _Ptr_base<_Ty>
+    {    // class for reference counted resource management
+private:
+    using _Mybase = _Ptr_base<_Ty>;
+
+public:
+    using typename _Mybase::element_type;
+
+#if _HAS_CXX17
+    using weak_type = weak_ptr<_Ty>;
+#endif /* _HAS_CXX17 */
+
+    constexpr shared_ptr() _NOEXCEPT
+        {    // construct empty shared_ptr
+        }
+
+    constexpr shared_ptr(nullptr_t) _NOEXCEPT
+        {    // construct empty shared_ptr
+        }
+
+    template<class _Ux,
+        enable_if_t<conjunction_v<conditional_t<is_array_v<_Ty>, _Can_array_delete<_Ux>, _Can_scalar_delete<_Ux>>,
+            _SP_convertible<_Ux, _Ty>>, int> = 0>
+        explicit shared_ptr(_Ux * _Px)
+        {    // construct shared_ptr object that owns _Px
+        _Setp(_Px, is_array<_Ty>{});
+        }
+
+    template<class _Ux,
+        class _Dx,
+        enable_if_t<conjunction_v<is_move_constructible<_Dx>,
+            _Can_call_function_object<_Dx&, _Ux *&>,
+            _SP_convertible<_Ux, _Ty>>, int> = 0>
+        shared_ptr(_Ux * _Px, _Dx _Dt)
+        {    // construct with _Px, deleter
+        _Setpd(_Px, _STD move(_Dt));
+        }
+
+    template<class _Ux,
+        class _Dx,
+        class _Alloc,
+        enable_if_t<conjunction_v<is_move_constructible<_Dx>,
+            _Can_call_function_object<_Dx&, _Ux *&>,
+            _SP_convertible<_Ux, _Ty>>, int> = 0>
+        shared_ptr(_Ux * _Px, _Dx _Dt, _Alloc _Ax)
+        {    // construct with _Px, deleter, allocator
+        _Setpda(_Px, _STD move(_Dt), _Ax);
+        }
+
+    template<class _Dx,
+        enable_if_t<conjunction_v<is_move_constructible<_Dx>,
+            _Can_call_function_object<_Dx&, nullptr_t&>
+        >, int> = 0>
+        shared_ptr(nullptr_t, _Dx _Dt)
+        {    // construct with nullptr, deleter
+        _Setpd(nullptr, _STD move(_Dt));
+        }
+
+    template<class _Dx,
+        class _Alloc,
+        enable_if_t<conjunction_v<is_move_constructible<_Dx>,
+            _Can_call_function_object<_Dx&, nullptr_t&>
+        >, int> = 0>
+        shared_ptr(nullptr_t, _Dx _Dt, _Alloc _Ax)
+        {    // construct with nullptr, deleter, allocator
+        _Setpda(nullptr, _STD move(_Dt), _Ax);
+        }
+
+    template<class _Ty2>
+        shared_ptr(const shared_ptr<_Ty2>& _Right, element_type * _Px) _NOEXCEPT
+        {    // construct shared_ptr object that aliases _Right
+        this->_Alias_construct_from(_Right, _Px);
+        }
+
+    shared_ptr(const shared_ptr& _Other) _NOEXCEPT
+        {    // construct shared_ptr object that owns same resource as _Other
+        this->_Copy_construct_from(_Other);
+        }
+
+    template<class _Ty2,
+        enable_if_t<_SP_pointer_compatible<_Ty2, _Ty>::value, int> = 0>
+        shared_ptr(const shared_ptr<_Ty2>& _Other) _NOEXCEPT
+        {    // construct shared_ptr object that owns same resource as _Other
+        this->_Copy_construct_from(_Other);
+        }
+
+    shared_ptr(shared_ptr&& _Right) _NOEXCEPT
+        {    // construct shared_ptr object that takes resource from _Right
+        this->_Move_construct_from(_STD move(_Right));
+        }
+
+    template<class _Ty2,
+        enable_if_t<_SP_pointer_compatible<_Ty2, _Ty>::value, int> = 0>
+        shared_ptr(shared_ptr<_Ty2>&& _Right) _NOEXCEPT
+        {    // construct shared_ptr object that takes resource from _Right
+        this->_Move_construct_from(_STD move(_Right));
+        }
+
+    template<class _Ty2,
+        enable_if_t<_SP_pointer_compatible<_Ty2, _Ty>::value, int> = 0>
+        explicit shared_ptr(const weak_ptr<_Ty2>& _Other)
+        {    // construct shared_ptr object that owns resource *_Other
+        if (!this->_Construct_from_weak(_Other))
+            {
+            _THROW(bad_weak_ptr{});
+            }
+        }
+
+ #if _HAS_AUTO_PTR_ETC
+    template<class _Ty2,
+        enable_if_t<is_convertible_v<_Ty2 *, _Ty *>, int> = 0>
+        shared_ptr(auto_ptr<_Ty2>&& _Other)
+        {    // construct shared_ptr object that owns *_Other.get()
+        _Ty2 * _Px = _Other.get();
+        _Set_ptr_rep_and_enable_shared(_Px, new _Ref_count<_Ty2>(_Px));
+        _Other.release();
+        }
+ #endif /* _HAS_AUTO_PTR_ETC */
+
+    template<class _Ux,
+        class _Dx,
+        enable_if_t<conjunction_v<
+            _SP_pointer_compatible<_Ux, _Ty>,
+            is_convertible<typename unique_ptr<_Ux, _Dx>::pointer, element_type *>
+        >, int> = 0>
+        shared_ptr(unique_ptr<_Ux, _Dx>&& _Other)
+        {    // construct from unique_ptr
+        using _Fancy_t = typename unique_ptr<_Ux, _Dx>::pointer;
+        using _Raw_t = typename unique_ptr<_Ux, _Dx>::element_type *;
+        using _Deleter_t = conditional_t<is_reference_v<_Dx>, decltype(_STD ref(_Other.get_deleter())), _Dx>;
+
+        const _Fancy_t _Fancy = _Other.get();
+
+        if (_Fancy)
+            {
+            const _Raw_t _Raw = _Fancy;
+            const auto _Rx = new _Ref_count_resource<_Fancy_t, _Deleter_t>(_Fancy, _Other.get_deleter());
+            _Set_ptr_rep_and_enable_shared(_Raw, _Rx);
+            _Other.release();
+            }
+        }
+
+    ~shared_ptr() _NOEXCEPT
+        {    // release resource
+        this->_Decref();
+        }
+
+    shared_ptr& operator=(const shared_ptr& _Right) _NOEXCEPT
+        {    // assign shared ownership of resource owned by _Right
+        shared_ptr(_Right).swap(*this);
+        return (*this);
+        }
+
+    template<class _Ty2>
+        shared_ptr& operator=(const shared_ptr<_Ty2>& _Right) _NOEXCEPT
+        {    // assign shared ownership of resource owned by _Right
+        shared_ptr(_Right).swap(*this);
+        return (*this);
+        }
+
+    shared_ptr& operator=(shared_ptr&& _Right) _NOEXCEPT
+        {    // take resource from _Right
+        shared_ptr(_STD move(_Right)).swap(*this);
+        return (*this);
+        }
+
+    template<class _Ty2>
+        shared_ptr& operator=(shared_ptr<_Ty2>&& _Right) _NOEXCEPT
+        {    // take resource from _Right
+        shared_ptr(_STD move(_Right)).swap(*this);
+        return (*this);
+        }
+
+ #if _HAS_AUTO_PTR_ETC
+    template<class _Ty2>
+        shared_ptr& operator=(auto_ptr<_Ty2>&& _Right)
+        {    // assign ownership of resource pointed to by _Right
+        shared_ptr(_STD move(_Right)).swap(*this);
+        return (*this);
+        }
+ #endif /* _HAS_AUTO_PTR_ETC */
+
+    template<class _Ux,
+        class _Dx>
+        shared_ptr& operator=(unique_ptr<_Ux, _Dx>&& _Right)
+        {    // move from unique_ptr
+        shared_ptr(_STD move(_Right)).swap(*this);
+        return (*this);
+        }
+
+    void swap(shared_ptr& _Other) _NOEXCEPT
+        {    // swap pointers
+        this->_Swap(_Other);
+        }
+
+    void reset() _NOEXCEPT
+        {    // release resource and convert to empty shared_ptr object
+        shared_ptr().swap(*this);
+        }
+
+    template<class _Ux>
+        void reset(_Ux * _Px)
+        {    // release, take ownership of _Px
+        shared_ptr(_Px).swap(*this);
+        }
+
+    template<class _Ux,
+        class _Dx>
+        void reset(_Ux * _Px, _Dx _Dt)
+        {    // release, take ownership of _Px, with deleter _Dt
+        shared_ptr(_Px, _Dt).swap(*this);
+        }
+
+    template<class _Ux,
+        class _Dx,
+        class _Alloc>
+        void reset(_Ux * _Px, _Dx _Dt, _Alloc _Ax)
+        {    // release, take ownership of _Px, with deleter _Dt, allocator _Ax
+        shared_ptr(_Px, _Dt, _Ax).swap(*this);
+        }
+
+    using _Mybase::get;
+
+    template<class _Ty2 = _Ty,
+        enable_if_t<!disjunction_v<is_array<_Ty2>, is_void<_Ty2>>, int> = 0>
+        _Ty2& operator*() const _NOEXCEPT
+        {    // return reference to resource
+        return (*get());
+        }
+
+    template<class _Ty2 = _Ty,
+        enable_if_t<!is_array_v<_Ty2>, int> = 0>
+        _Ty2 * operator->() const _NOEXCEPT
+        {    // return pointer to resource
+        return (get());
+        }
+
+    template<class _Ty2 = _Ty,
+        class _Elem = element_type,
+        enable_if_t<is_array_v<_Ty2>, int> = 0>
+        _Elem& operator[](ptrdiff_t _Idx) const
+        {    // subscript
+        return (get()[_Idx]);
+        }
+
+    _CXX17_DEPRECATE_SHARED_PTR_UNIQUE bool unique() const _NOEXCEPT
+        {    // return true if no other shared_ptr object owns this resource
+        return (this->use_count() == 1);
+        }
+
+    explicit operator bool() const _NOEXCEPT
+        {    // test if shared_ptr object owns a resource
+        return (get() != nullptr);
+        }
+
+private:
+    template<class _Ux>
+        void _Setp(_Ux * _Px, true_type)
+        {    // take ownership of _Px
+        _Setpd(_Px, default_delete<_Ux[]>{});
+        }
+
+    template<class _Ux>
+        void _Setp(_Ux * _Px, false_type)
+        {    // take ownership of _Px
+        _TRY_BEGIN    // allocate control block and set
+        _Set_ptr_rep_and_enable_shared(_Px, new _Ref_count<_Ux>(_Px));
+        _CATCH_ALL    // allocation failed, delete resource
+        delete _Px;
+        _RERAISE;
+        _CATCH_END
+        }
+
+    template<class _UxptrOrNullptr,
+        class _Dx>
+        void _Setpd(_UxptrOrNullptr _Px, _Dx _Dt)
+        {    // take ownership of _Px, deleter _Dt
+        _TRY_BEGIN    // allocate control block and set
+        _Set_ptr_rep_and_enable_shared(_Px, new _Ref_count_resource<_UxptrOrNullptr, _Dx>(_Px, _STD move(_Dt)));
+        _CATCH_ALL    // allocation failed, delete resource
+        _Dt(_Px);
+        _RERAISE;
+        _CATCH_END
+        }
+
+    template<class _UxptrOrNullptr,
+        class _Dx,
+        class _Alloc>
+        void _Setpda(_UxptrOrNullptr _Px, _Dx _Dt, _Alloc _Ax)
+        {    // take ownership of _Px, deleter _Dt, allocator _Ax
+        using _Refd = _Ref_count_resource_alloc<_UxptrOrNullptr, _Dx, _Alloc>;
+        using _Alref_alloc = _Rebind_alloc_t<_Alloc, _Refd>;
+        using _Alref_traits = allocator_traits<_Alref_alloc>;
+        _Alref_alloc _Alref(_Ax);
+
+        _TRY_BEGIN    // allocate control block and set
+        const auto _Pfancy = _Alref_traits::allocate(_Alref, 1);
+        _Refd * const _Pref = _Unfancy(_Pfancy);
+            _TRY_BEGIN
+            _Alref_traits::construct(_Alref, _Pref, _Px, _STD move(_Dt), _Ax);
+            _Set_ptr_rep_and_enable_shared(_Px, _Pref);
+            _CATCH_ALL
+            _Alref_traits::deallocate(_Alref, _Pfancy, 1);
+            _RERAISE;
+            _CATCH_END
+        _CATCH_ALL    // allocation failed, delete resource
+        _Dt(_Px);
+        _RERAISE;
+        _CATCH_END
+        }
+
+    template<class _Ty0,
+        class... _Types>
+        friend shared_ptr<_Ty0> make_shared(_Types&&... _Args);
+
+    template<class _Ty0,
+        class _Alloc,
+        class... _Types>
+        friend shared_ptr<_Ty0> allocate_shared(const _Alloc& _Al_arg, _Types&&... _Args);
+
+    template<class _Ux>
+        void _Set_ptr_rep_and_enable_shared(_Ux * _Px, _Ref_count_base * _Rx)
+        {    // take ownership of _Px
+        this->_Set_ptr_rep(_Px, _Rx);
+        _Enable_shared_from_this(*this, _Px);
+        }
+
+    void _Set_ptr_rep_and_enable_shared(nullptr_t, _Ref_count_base * _Rx)
+        {    // take ownership of nullptr
+        this->_Set_ptr_rep(nullptr, _Rx);
+        }
+    };
+
+```
+
+对于shared_ptr和weak_ptr而言，他们有共同的父类_Ptr_base,_Ptr_base使用了有一个私有成员_Ref_count_base，用以实现计数功能。
+
+```cpp
+template<class _Ty>
+    class _Ptr_base
+    {    // base class for shared_ptr and weak_ptr
+public:
+    using element_type = remove_extent_t<_Ty>;
+    long use_count();// return use count
+    bool owner_before(const _Ptr_base<_Ty2>& _Right);// compare addresses of manager objects
+protected:
+    element_type * get() const _NOEXCEPT
+        {    // return pointer to resource
+        return (_Ptr);
+        }
+
+    constexpr _Ptr_base() _NOEXCEPT = default;
+    ~_Ptr_base() = default;
+    friend class weak_ptr;    // specifically, weak_ptr::lock()
+    void _Decref()// decrement reference count
+    void _Swap(_Ptr_base& _Right) _NOEXCEPT// swap pointers
+    void _Decwref()// decrement weak reference count
+    };
+
+```
+
+```cpp
+class _Ref_count_base
+    {    // common code for reference counting
+private:
+    virtual void _Destroy() _NOEXCEPT = 0;
+    virtual void _Delete_this() _NOEXCEPT = 0;
+    _Atomic_counter_t _Uses;
+    _Atomic_counter_t _Weaks;
+
+protected:
+    _Ref_count_base(): _Uses(1), _Weaks(1)    // non-atomic initializations
+public:
+    virtual ~_Ref_count_base() _NOEXCEPT
+    bool _Incref_nz()// increment use count if not zero, return true if successful
+    void _Incref()// increment use count
+    void _Incwref()// increment weak reference count
+
+    void _Decref()// decrement use count
+
+    void _Decwref()// decrement weak reference count
+ 
+    long _Use_count() const _NOEXCEPT // return use count
+
+    virtual void * _Get_deleter(const type_info&) const _NOEXCEPT
+        {    // return address of deleter object
+        return (nullptr);
+        }
+    };
+
+```
 ## 2.迭代器类型
 
 共有五类迭代器：Input Iterator ,Output Iterator,Forwaed Iterator,Bidirectional Iterator,Random Access Iterator.

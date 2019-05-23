@@ -135,111 +135,203 @@ nums2 = [3, 4]
 
 在不考虑时间复杂度的情况下的解法(见笑)：
 
-    ```cpp
-    double findMedianSortedArrays(vector<int>& nums1, vector<int>& nums2) {
-        int iSize = nums1.size() + nums2.size();
-        double iAns = 0;
-        bool isOdd = false;
-        if (iSize % 2 == 0)
-            isOdd = false;
-        else
-            isOdd = true;
-        if (isOdd) {
-            int targetIndex = iSize / 2 + 1, iIndex = 0, iIndex1 = 0, iIndex2 = 0;
-            while (1){
-                iIndex++;
-                if (iIndex == targetIndex) {
-                    if (iIndex1 == nums1.size()) {
-                        iAns = nums2.at(iIndex2);
-                        break;
-                    }
-                    if (iIndex2 == nums2.size()) {
-                        iAns = nums1.at(iIndex1);
-                        break;
-                    }
-                    if (nums1.at(iIndex1) < nums2.at(iIndex2)) {
-                        iAns = nums1.at(iIndex1);
-                        break;
-                    }
-                    else{
-                        iAns = nums2.at(iIndex2);
-                        break;
-                    }
+```cpp
+double findMedianSortedArrays(vector<int>& nums1, vector<int>& nums2) {
+    int iSize = nums1.size() + nums2.size();
+    double iAns = 0;
+    bool isOdd = false;
+    if (iSize % 2 == 0)
+        isOdd = false;
+    else
+        isOdd = true;
+    if (isOdd) {
+        int targetIndex = iSize / 2 + 1, iIndex = 0, iIndex1 = 0, iIndex2 = 0;
+        while (1){
+            iIndex++;
+            if (iIndex == targetIndex) {
+                if (iIndex1 == nums1.size()) {
+                    iAns = nums2.at(iIndex2);
+                    break;
                 }
-                else {
-                    if (iIndex1 == nums1.size()) {
-                        iIndex2++;
-                        continue;
-                    }
-                    if (iIndex2 == nums2.size()) {
-                        iIndex1++;
-                        continue;
-                    }
-                    if (nums1.at(iIndex1) < nums2.at(iIndex2))
-                        iIndex1++;
-                    else
-                        iIndex2++;
+                if (iIndex2 == nums2.size()) {
+                    iAns = nums1.at(iIndex1);
+                    break;
+                }
+                if (nums1.at(iIndex1) < nums2.at(iIndex2)) {
+                    iAns = nums1.at(iIndex1);
+                    break;
+                }
+                else{
+                    iAns = nums2.at(iIndex2);
+                    break;
                 }
             }
+            else {
+                if (iIndex1 == nums1.size()) {
+                    iIndex2++;
+                    continue;
+                }
+                if (iIndex2 == nums2.size()) {
+                    iIndex1++;
+                    continue;
+                }
+                if (nums1.at(iIndex1) < nums2.at(iIndex2))
+                    iIndex1++;
+                else
+                    iIndex2++;
+            }
         }
-        else {
-            int targetIndex = iSize / 2, iIndex = 0, iIndex1 = 0, iIndex2 = 0;
-            while (1){
-                iIndex++;
-                if (iIndex == targetIndex) {
-                    if (iIndex1 == nums1.size()) {
-                        iAns = nums2.at(iIndex2)+ nums2.at(iIndex2 + 1);
-                        iAns /= 2;
-                        break;
-                    }
-                    if (iIndex2 == nums2.size()) {
-                        iAns = nums1.at(iIndex1) + nums1.at(iIndex1 + 1);
-                        iAns /= 2;
-                        break;
-                    }
-                    if (nums1.at(iIndex1) < nums2.at(iIndex2)) {
-                        iAns += nums1.at(iIndex1);
-                        iIndex1++;
-                    }
-                    else {
-                        iAns += nums2.at(iIndex2);
-                        iIndex2++;
-                    }
-                    if (iIndex1 == nums1.size()) {
-                        iAns += nums2.at(iIndex2 );
-                        iAns /= 2;
-                        break;
-                    }
-                    if (iIndex2 == nums2.size()) {
-                        iAns +=  nums1.at(iIndex1 );
-                        iAns /= 2;
-                        break;
-                    }
-                    if (nums1.at(iIndex1) < nums2.at(iIndex2 )) {
-                        iAns += nums1.at(iIndex1);
-                    }
-                    else {
-                        iAns += nums2.at(iIndex2);
-                    }
+    }
+    else {
+        int targetIndex = iSize / 2, iIndex = 0, iIndex1 = 0, iIndex2 = 0;
+        while (1){
+            iIndex++;
+            if (iIndex == targetIndex) {
+                if (iIndex1 == nums1.size()) {
+                    iAns = nums2.at(iIndex2)+ nums2.at(iIndex2 + 1);
                     iAns /= 2;
                     break;
                 }
-                else {
-                    if (iIndex1 == nums1.size()) {
-                        iIndex2++;
-                        continue;
-                    }
-                    if (iIndex2 == nums2.size()) {
-                        iIndex1++;
-                        continue;
-                    }
-                    if (nums1.at(iIndex1) < nums2.at(iIndex2))
-                        iIndex1++;
-                    else
-                        iIndex2++;
+                if (iIndex2 == nums2.size()) {
+                    iAns = nums1.at(iIndex1) + nums1.at(iIndex1 + 1);
+                    iAns /= 2;
+                    break;
                 }
+                if (nums1.at(iIndex1) < nums2.at(iIndex2)) {
+                    iAns += nums1.at(iIndex1);
+                    iIndex1++;
+                }
+                else {
+                    iAns += nums2.at(iIndex2);
+                    iIndex2++;
+                }
+                if (iIndex1 == nums1.size()) {
+                    iAns += nums2.at(iIndex2 );
+                    iAns /= 2;
+                    break;
+                }
+                if (iIndex2 == nums2.size()) {
+                    iAns +=  nums1.at(iIndex1 );
+                    iAns /= 2;
+                    break;
+                }
+                if (nums1.at(iIndex1) < nums2.at(iIndex2 )) {
+                    iAns += nums1.at(iIndex1);
+                }
+                else {
+                    iAns += nums2.at(iIndex2);
+                }
+                iAns /= 2;
+                break;
+            }
+            else {
+                if (iIndex1 == nums1.size()) {
+                    iIndex2++;
+                    continue;
+                }
+                if (iIndex2 == nums2.size()) {
+                    iIndex1++;
+                    continue;
+                }
+                if (nums1.at(iIndex1) < nums2.at(iIndex2))
+                    iIndex1++;
+                else
+                    iIndex2++;
             }
         }
-        return iAns;
     }
-    ```
+    return iAns;
+}
+```
+
+# 5. 最长回文子串
+
+给定一个字符串 s，找到 s 中最长的回文子串。你可以假设 s 的最大长度为 1000。
+
+示例 1：
+
+输入: "babad"
+输出: "bab"
+注意: "aba" 也是一个有效答案。
+示例 2：
+
+输入: "cbbd"
+输出: "bb"
+
+```cpp
+string longestPalindrome(string s) {
+    int iCurrent = 0, iLeft = 0, iRight = 0, iMax = 0, iPos = 0;
+    string ans;
+    for (; iCurrent < s.size(); iCurrent++) {
+        int iSLeft = 0, iSRight = 0;
+        iSLeft = iSRight = iLeft = iRight = iCurrent;
+        if (iRight < s.size() && iLeft >= 0){
+            while (iRight < s.size() && iLeft >= 0 && s.at(iRight) == s.at(iCurrent)) {
+                iSRight = iRight;
+                iRight++;	
+            }
+            while (iRight < s.size() && iLeft >= 0 &&  s.at(iLeft) == s.at(iCurrent)) {
+                iSLeft = iLeft;
+                iLeft--;
+            }
+            while (iRight < s.size() && iLeft >= 0 &&  s.at(iLeft) == s.at(iRight)) {
+                iSLeft = iLeft;
+                iSRight = iRight;                    
+                iLeft--;
+                iRight++;
+            }
+            if (iSRight - iSLeft + 1> iMax) {
+                iMax = iSRight - iSLeft + 1;
+                iPos = iSLeft;
+            }
+        }
+    }
+    return s.substr(iPos, iMax);
+}
+```
+
+# 11. 盛最多水的容器
+
+给定 n 个非负整数 a1，a2，...，an，
+每个数代表坐标中的一个点 (i, ai) 。在坐标内画 n 条垂直线，垂直线 i 的两个端点分别为 (i, ai) 和 (i, 0)。找出其中的两条线，使得它们与 x 轴共同构成的容器可以容纳最多的水。
+
+说明：你不能倾斜容器，且 n 的值至少为 2。
+
+示例:
+
+输入: [1,8,6,2,5,4,8,3,7]
+输出: 49
+
+解法1：暴力法。通过双重循环逐项取值，计算面积值并进行比对，保留最大面积。时间复杂度O(n2)。事实上会超时。
+
+```cpp
+int maxArea(vector<int>& height) {
+    int iMaxArea = 0;
+    for (auto i = 0; i < height.size(); i++) {
+        for (auto j = i + 1; j < height.size(); j++) {
+            int iHeight = min(height.at(i), height.at(j));
+            if (iHeight*(j - i) > iMaxArea)
+                iMaxArea = iHeight * (j - i);
+        }
+    }
+    return iMaxArea;
+}
+```
+
+解法2：双指针法。这种解法利用的是本题的特性，即在左右两边中，决定水桶盛水量的是较短的一边。因此，可以考虑如下情况，左右两边左高右低，此时要将一边向内移动，只能选择短的一边，因为即使长的变得更长，也只能带来面积的减少。时间复杂度O(n)。
+
+```cpp
+int maxArea(vector<int>& height) {
+    int iMaxArea = 0, iLeft = 0, iRight = height.size() - 1;
+    while (iLeft < iRight) {
+        int iHeight = min(height.at(iLeft), height.at(iRight));
+        if (iHeight*(iRight - iLeft) > iMaxArea)
+            iMaxArea = iHeight * (iRight - iLeft);
+        if (height.at(iLeft) < height.at(iRight))
+            iLeft++;
+        else
+            iRight--;
+    }
+    return iMaxArea;
+}
+```

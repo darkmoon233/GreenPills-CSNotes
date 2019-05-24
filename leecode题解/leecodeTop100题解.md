@@ -335,3 +335,87 @@ int maxArea(vector<int>& height) {
     return iMaxArea;
 }
 ```
+
+# 15. 三数之和
+
+给定一个包含 n 个整数的数组 nums，判断 nums 中是否存在三个元素 a，b，c ，使得 a + b + c = 0 ？找出所有满足条件且不重复的三元组。
+
+注意：答案中不可以包含重复的三元组。
+例如, 给定数组 nums = [-1, 0, 1, 2, -1, -4]，
+
+满足要求的三元组集合为：
+[
+  [-1, 0, 1],
+  [-1, -1, 2]
+]
+
+解法1： 最简单的思路是三重循环，在此基础上引入哈希表可以去除一重循环。理论上时间复杂度为O(n2)，但是其中加入了find的操作，也就是实际上时间复杂度是超过O(n2)。事实上会在289用例处超时。
+
+```cpp
+vector<vector<int>> threeSum(vector<int>& nums) {
+    vector<vector<int>>vTotalNums;
+    unordered_map<int, int> hmNums;
+    for (int i = 0; i < nums.size(); i++) {
+        if (hmNums.count(nums.at(i)))
+            hmNums[nums.at(i)]++;
+        hmNums[nums.at(i)] = 1;
+    }
+    auto iter1 = nums.begin();
+    while (iter1 != nums.end()) {
+        auto iter2 = iter1;
+        iter2++;
+        while (iter2 != nums.end()) {
+            int target = 0 - *iter1 - *iter2;
+            if (hmNums.count(target) && find(nums.begin(),nums.end(),target) != iter1 && find(nums.begin(), nums.end(), target) != iter2) {
+                vector<int> vTemp;
+                vTemp.push_back(*iter1);
+                vTemp.push_back(*iter2);
+                vTemp.push_back(target);
+                sort(vTemp.begin(), vTemp.end());
+                auto iter3 = find(vTotalNums.begin(), vTotalNums.end(), vTemp);
+                if (iter3 == vTotalNums.end())
+                    vTotalNums.push_back(vTemp);
+            }
+            iter2++;
+        }
+        iter1++;
+    }
+    return vTotalNums;
+}
+```
+
+解法2：对撞指针法。对整个数组排序，固定没轮的target = 0 - nums[i],然后用左右两边指针向内逼近，对重复项进行跳过处理。时间复杂度为O(n2).
+
+```cpp
+vector<vector<int>>vTotalNums;
+sort(nums.begin(), nums.end());
+if (nums.empty() || nums.front()>0 || nums.back()<0)
+    return vTotalNums;
+for (int i = 0; i < nums.size(); i++) {
+    if (i>0 && nums.at(i) == nums.at(i-1))continue;
+    int iLeft = i + 1, iRight = nums.size() - 1, target = nums.at(i)*-1;
+    while (iLeft < iRight) {
+        if (iLeft>i+1 &&  nums.at(iLeft) == nums.at(iLeft - 1)) {
+            iLeft++;
+            continue;
+        }
+        if (iRight < nums.size() - 1 &&  nums.at(iRight) == nums.at(iRight + 1)) {
+            iRight--;
+            continue;
+        }
+        if (nums.at(iLeft) + nums.at(iRight) == target) {
+            vTotalNums.push_back(vector<int>{nums[i], nums[iLeft], nums[iRight]});
+            iLeft++;
+            iRight--;
+        }
+        else {
+            if (nums.at(iLeft)+nums.at(iRight) < target)
+                iLeft++;
+            else
+                iRight--;
+        }
+    }
+}
+
+return vTotalNums;
+```

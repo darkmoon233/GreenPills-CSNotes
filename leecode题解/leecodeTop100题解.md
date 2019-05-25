@@ -1,4 +1,3 @@
-<!-- TOC -->autoauto- [1. 两数之和](#1-两数之和)auto- [3. 无重复字符的最长子串](#3-无重复字符的最长子串)auto- [4. 寻找两个有序数组的中位数](#4-寻找两个有序数组的中位数)auto- [5. 最长回文子串](#5-最长回文子串)auto- [11. 盛最多水的容器](#11-盛最多水的容器)auto- [15. 三数之和](#15-三数之和)auto- [17. 电话号码的字母组合](#17-电话号码的字母组合)autoauto<!-- /TOC -->
 
 # 1. 两数之和
 
@@ -495,5 +494,83 @@ vector<string> letterCombinations(string digits) {
         return vAns;
     letterCombinations(digits, 0, "");
     return vAns;
+}
+```
+
+# 19. 删除链表的倒数第N个节点
+
+给定一个链表，删除链表的倒数第 n 个节点，并且返回链表的头结点。
+
+示例：
+
+给定一个链表: 1->2->3->4->5, 和 n = 2.
+
+当删除了倒数第二个节点后，链表变为 1->2->3->5.
+说明：
+
+给定的 n 保证是有效的。
+
+进阶：
+
+你能尝试使用一趟扫描实现吗？
+
+解法1.通过哈希表记录节点序号和对应的指针，就可以用顺序访问的方式随机取到链表的任意节点。同样是一次遍历，时间复杂度O(n)
+
+```cpp
+struct ListNode {
+    int val;
+    ListNode *next;
+    ListNode(int x) : val(x), next(NULL) {}
+};
+ListNode* removeNthFromEnd(ListNode* head, int n) {
+    unordered_map<int, ListNode*> hmListNode;
+    int size = 1;
+    ListNode* temp = head;
+
+    while (temp!=NULL) {
+        hmListNode[size] = temp;
+        size++;
+        temp = temp->next;
+    }
+    int  iDelete = size - n, iFront = iDelete - 1;
+    if (n == size - 1) {
+        head = head->next;
+    }
+    else{
+        hmListNode[iFront]->next = hmListNode[iDelete]->next;
+    }
+    hmListNode[iDelete]->next = NULL;
+    return head;
+}
+```
+
+解法2：双指针法。设定前后两个指针，前指针持续向前，后指针在等了n次之后再出发，等到前指针到达尾节点时，后指针就是目标节点。也是一次遍历，时间复杂度O(n)。
+
+```cpp
+struct ListNode {
+    int val;
+    ListNode *next;
+    ListNode(int x) : val(x), next(NULL) {}
+};
+ListNode* removeNthFromEnd(ListNode* head, int n) {
+    ListNode* pBack = head;
+    ListNode* pFront = head;
+    bool flag = false;
+    while (pFront != NULL) {
+        if (flag == false) {
+            if (n == 0)
+                flag = true;
+            n--;
+        }
+        else
+            pBack = pBack->next;
+        pFront = pFront->next;
+    }
+    if (flag == false && pBack == head)
+        head = head->next;
+    else {
+        pBack->next = pBack->next->next;
+    }
+    return head;
 }
 ```

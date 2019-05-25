@@ -1,3 +1,4 @@
+<!-- TOC -->autoauto- [1. 两数之和](#1-两数之和)auto- [3. 无重复字符的最长子串](#3-无重复字符的最长子串)auto- [4. 寻找两个有序数组的中位数](#4-寻找两个有序数组的中位数)auto- [5. 最长回文子串](#5-最长回文子串)auto- [11. 盛最多水的容器](#11-盛最多水的容器)auto- [15. 三数之和](#15-三数之和)auto- [17. 电话号码的字母组合](#17-电话号码的字母组合)autoauto<!-- /TOC -->
 
 # 1. 两数之和
 
@@ -268,7 +269,7 @@ string longestPalindrome(string s) {
         if (iRight < s.size() && iLeft >= 0){
             while (iRight < s.size() && iLeft >= 0 && s.at(iRight) == s.at(iCurrent)) {
                 iSRight = iRight;
-                iRight++;	
+                iRight++;
             }
             while (iRight < s.size() && iLeft >= 0 &&  s.at(iLeft) == s.at(iCurrent)) {
                 iSLeft = iLeft;
@@ -276,7 +277,7 @@ string longestPalindrome(string s) {
             }
             while (iRight < s.size() && iLeft >= 0 &&  s.at(iLeft) == s.at(iRight)) {
                 iSLeft = iLeft;
-                iSRight = iRight;                    
+                iSRight = iRight;
                 iLeft--;
                 iRight++;
             }
@@ -418,4 +419,81 @@ for (int i = 0; i < nums.size(); i++) {
 }
 
 return vTotalNums;
+```
+
+# 17. 电话号码的字母组合
+
+给定一个仅包含数字 2-9 的字符串，返回所有它能表示的字母组合。
+
+给出数字到字母的映射如下（与电话按键相同）。注意 1 不对应任何字母。
+
+![phoneNumber](https://github.com/darkmoon233/GreenPills-CSNotes/blob/master/images/leecode17phonenumber.png)
+
+示例:
+
+输入："23"
+输出：["ad", "ae", "af", "bd", "be", "bf", "cd", "ce", "cf"].
+说明:
+尽管上面的答案是按字典序排列的，但是你可以任意选择答案输出的顺序。
+
+解法1：用hash表存放按键关系，循环迭代的方式逐项向后添加字母。时间复杂度是O(4n).
+
+```cpp
+vector<string> letterCombinations(string digits) {
+    unordered_map<char, vector<string>> hmLetters;
+    hmLetters['2'] = vector<string>{ "a","b","c" };
+    hmLetters['3'] = vector<string>{ "d","e","f" };
+    hmLetters['4'] = vector<string>{ "g","h","i" };
+    hmLetters['5'] = vector<string>{ "j","k","l" };
+    hmLetters['6'] = vector<string>{ "m","n","o" };
+    hmLetters['7'] = vector<string>{ "p","q","r","s" };
+    hmLetters['8'] = vector<string>{ "t","u","v" };
+    hmLetters['9'] = vector<string>{ "w","x","y","z" };
+    vector<string> vFront, vCurrnt, vAns;
+    for (int i = 0; i < digits.size(); i++) {
+        if (i == 0) {
+            vCurrnt = hmLetters[digits.front()];
+            continue;
+        }
+        swap(vFront, vCurrnt);
+        vCurrnt.clear();
+        for (int j = 0; j < vFront.size(); j++) {
+            for (int k = 0; k < hmLetters[digits.at(i)].size(); k++) {
+                string sTemp = vFront.at(j) + hmLetters[digits.at(i)].at(k);
+                vCurrnt.push_back(sTemp);
+            }
+        }
+    }
+    return vCurrnt;
+}
+```
+
+解法2：用hash表存放按键关系，用递归的方式逐项添加字符，直到串长度用完。
+
+```cpp
+unordered_map<char, vector<string>> hmLetters;
+vector<string> vAns;
+void letterCombinations(string digits, int index, string temp) {
+    if (index == digits.size()) {
+        vAns.push_back(temp);
+        return;
+    }
+    for (int i = 0; i < hmLetters[digits.at(index)].size(); i++) {
+        letterCombinations(digits, index + 1, temp + hmLetters[digits.at(index)].at(i));
+    }
+}
+vector<string> letterCombinations(string digits) {
+    hmLetters['2'] = vector<string>{ "a","b","c" };
+    hmLetters['3'] = vector<string>{ "d","e","f" };
+    hmLetters['4'] = vector<string>{ "g","h","i" };
+    hmLetters['5'] = vector<string>{ "j","k","l" };
+    hmLetters['6'] = vector<string>{ "m","n","o" };
+    hmLetters['7'] = vector<string>{ "p","q","r","s" };
+    hmLetters['8'] = vector<string>{ "t","u","v" };
+    hmLetters['9'] = vector<string>{ "w","x","y","z" };
+    if (digits.size() == 0)
+        return vAns;
+    letterCombinations(digits, 0, "");
+    return vAns;
+}
 ```

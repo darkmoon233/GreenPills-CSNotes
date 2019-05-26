@@ -574,3 +574,83 @@ ListNode* removeNthFromEnd(ListNode* head, int n) {
     return head;
 }
 ```
+
+# 21. 合并两个有序链表
+
+将两个有序链表合并为一个新的有序链表并返回。新链表是通过拼接给定的两个链表的所有节点组成的。 
+
+示例：
+
+输入：1->2->4, 1->3->4
+输出：1->1->2->3->4->4
+
+解法1：比较法。时间复杂度O(n)。
+
+```cpp
+struct ListNode {
+    int val;
+    ListNode *next;
+    ListNode(int x) : val(x), next(NULL) {}
+};
+ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
+    ListNode *head,*current,*temp1, *temp2;
+    if (l1 == NULL)return l2;
+    if (l2 == NULL)return l1;
+    if (l1->val < l2->val) {
+        head = l1;
+        temp1 = head->next;
+        temp2 = l2;
+    }
+    else {
+        head = l2;
+        temp1 = l1;
+        temp2 = head->next;
+    }
+    current = head;
+    while (temp1 != NULL || temp2 != NULL) {
+        if (temp1 == NULL) {
+            current->next = temp2;
+            break;
+        }
+        if (temp2 == NULL) {
+            current->next = temp1;
+            break;
+        }
+        if (temp1->val>temp2->val) {
+            current->next = temp2;
+            current = temp2;
+            temp2 = temp2->next;
+            continue;
+        }
+        if (temp1->val <= temp2->val) {
+            current->next = temp1;
+            current = temp1;
+            temp1 = temp1->next;
+            continue;
+        }
+    }
+    return head;
+}
+```
+
+解法2：递归。感受一下，我是没想到的。
+
+```cpp
+struct ListNode {
+    int val;
+    ListNode *next;
+    ListNode(int x) : val(x), next(NULL) {}
+};
+ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
+    if (l1 == NULL)return l2;
+    if (l2 == NULL)return l1;
+    if (l1->val < l2->val) {
+        l1->next = mergeTwoLists(l1->next, l2);
+        return l1;
+    }
+    else {
+        l2->next = mergeTwoLists(l1, l2->next);
+        return l2;
+    }
+}
+```

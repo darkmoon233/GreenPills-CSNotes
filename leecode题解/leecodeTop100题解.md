@@ -654,3 +654,39 @@ ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
     }
 }
 ```
+
+# 22. 括号生成
+
+给出 n 代表生成括号的对数，请你写出一个函数，使其能够生成所有可能的并且有效的括号组合。
+
+例如，给出 n = 3，生成结果为：
+
+[
+  "((()))",
+  "(()())",
+  "(())()",
+  "()(())",
+  "()()()"
+]
+
+解法：分析可知，第一个总是"(",在逐个生成字符串的过程中，遵循"("的数量大于等于")"的数量的规则添加新的符号。不过事实上超过10就会超时了。
+
+```cpp
+vector<string> vTotal;
+void generateParenthesis(int n, string s, int iLeft, int iRight) {
+    if (iLeft == n && iRight == n) {
+        vTotal.push_back(s);
+        return;
+    }
+    if (iLeft != n)
+        generateParenthesis(n, s+"(", iLeft + 1, iRight);
+    if (iRight < iLeft)
+        generateParenthesis(n, s+")", iLeft, iRight + 1);
+}
+vector<string> generateParenthesis(int n) {
+    if (n == 0)return vTotal;
+    else
+        generateParenthesis(n, "(", 1, 0);
+    return vTotal;
+}
+```

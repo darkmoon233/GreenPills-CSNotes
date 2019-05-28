@@ -690,3 +690,62 @@ vector<string> generateParenthesis(int n) {
     return vTotal;
 }
 ```
+
+# 23. 合并K个排序链表
+
+合并 k 个排序链表，返回合并后的排序链表。请分析和描述算法的复杂度。
+
+示例:
+
+输入:
+[
+  1->4->5,
+  1->3->4,
+  2->6
+]
+输出: 1->1->2->3->4->4->5->6
+
+解法1：通过map进行链表节点的存储，对于相同的val的节点进行链表的串联，利用map的底层为红黑树的特性进行存储可以得到有序的序列（不过和堆很类似）。相当于整个链表都被拆散了再进行组合。时间复杂度取决于链表的节点总数。
+
+```cpp
+struct ListNode {
+    int val;
+    ListNode *next;
+    ListNode(int x) : val(x), next(NULL) {}
+};
+ListNode* mergeKLists(vector<ListNode*>& lists) {
+    if (lists.size() == 0) {
+        return NULL;
+    }
+    if (lists.size() == 1) {
+        return lists.front();
+    }
+    map<int, ListNode*> hmTotalNums;
+    for (int i = 0; i < lists.size(); i++) {
+        ListNode* temp = lists.at(i);
+        while (temp != NULL) {
+            ListNode* nextNode = temp->next;
+            temp->next = NULL;
+            if (hmTotalNums.count(temp->val)) {
+                temp->next = hmTotalNums[temp->val];
+                hmTotalNums[temp->val] = temp;
+            }
+            else
+                hmTotalNums[temp->val] = temp;
+            temp = nextNode;
+        }
+    }
+    if (hmTotalNums.size() == 0)
+        return NULL;
+    auto iter = hmTotalNums.begin();
+    while (iter != hmTotalNums.end()) {
+        ListNode* temp=iter->second;
+        while (temp->next != NULL)
+            temp = temp->next;
+        iter++;
+        if (iter != hmTotalNums.end())
+            temp->next = iter->second;
+    }
+    return hmTotalNums.begin()->second;
+}
+```

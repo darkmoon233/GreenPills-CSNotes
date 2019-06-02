@@ -771,7 +771,6 @@ ListNode* mergeKLists(vector<ListNode*>& lists) {
 3. 交换target和front处的值
 4. 对[front+1,end]的进行排序。
 
-
 ```cpp
 bool cmp(int a, int b) {
     if (a > b)return true;
@@ -806,5 +805,86 @@ void nextPermutation(vector<int>& nums) {
 
     sort(endIter + 1, nums.end());
     return;
+}
+```
+
+# 32. 最长有效括号
+
+给定一个只包含 '(' 和 ')' 的字符串，找出最长的包含有效括号的子串的长度。
+
+示例 1:
+
+输入: "(()"
+输出: 2
+解释: 最长有效括号子串为 "()"
+示例 2:
+
+输入: ")()())"
+输出: 4
+解释: 最长有效括号子串为 "()()"
+
+解法1：括号的合法性可以设定为，'('为1，')'为-1，一个合法的括号串的和是0，同时从头计算串的值，在任意一步都不小于0。基于这样的0和思想，可以遍历整个串，从当前字符向后逐步试探是否合法。当查找到合法串后可以直接跳过对这部分的重复计算。时间复杂度其实是O(n).
+
+```cpp
+int longestValidParentheses(string s) {
+    if (s.size() <= 1)return 0;
+    int iIndex = 0, iMax = 0;
+    for (; iIndex < s.size(); iIndex++) {
+        int iTarget = iIndex,iRight = iIndex;
+        if (s.at(iIndex) == ')') {
+            continue;
+        }
+        else{
+            int iCurrent = 0;
+            while (iRight != s.size()) {
+                if (s.at(iRight) == '(') {
+                    iCurrent++;
+                    iRight++;
+                }
+                else {
+                    iCurrent--;
+                    if (iCurrent == 0) {
+                        if (iRight - iIndex > iMax) {
+                            iMax = iRight - iIndex + 1;
+                            iTarget = iRight;
+                        }
+                    }
+                    if (iCurrent < 0)
+                        break;
+                    iRight++;
+                }
+            }
+        }
+        iIndex = iTarget;
+    }
+    return iMax;
+}
+```
+
+解法2：利用堆栈。基本思想是当遇到'('时进行入栈，遇到')'进行出栈，并维护一个当前计数位置，当出现了多余的')'时认为计数应重新开始。其中的关键在栈是否为空会对最大值计算有影响，当栈为空时从start到当前位置都是合法的，当栈不为空时栈顶元素到当前位置是合法的。这个算法只需要进行一次遍历，时间复杂度为O(n).
+
+```cpp
+int longestValidParentheses(string s) {
+    stack<int> sKuohao;
+    int iMax = 0;
+    int iStart= 0;
+    for (int i = 0; i < s.size(); i++) {
+        if (s.at(i) == '(') {
+            sKuohao.push(i);
+            continue;
+        }
+        else {
+            if (!sKuohao.empty()) {
+                sKuohao.pop();
+                if (sKuohao.empty())
+                    iMax = max(i - iStart + 1, iMax);
+                else
+                    iMax = max(i - sKuohao.top(), iMax);
+            }
+            else
+                iStart = i + 1;
+        }
+    }
+    return iMax;
 }
 ```

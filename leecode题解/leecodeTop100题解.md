@@ -888,3 +888,147 @@ int longestValidParentheses(string s) {
     return iMax;
 }
 ```
+
+# 33. 搜索旋转排序数组
+
+( 例如，数组 [0,1,2,4,5,6,7] 可能变为 [4,5,6,7,0,1,2] )。
+
+搜索一个给定的目标值，如果数组中存在这个目标值，则返回它的索引，否则返回 -1 。
+
+你可以假设数组中不存在重复的元素。
+
+你的算法时间复杂度必须是 O(log n) 级别。
+
+示例 1:
+
+输入: nums = [4,5,6,7,0,1,2], target = 0
+输出: 4
+示例 2:
+
+输入: nums = [4,5,6,7,0,1,2], target = 3
+输出: -1
+
+题解：常见的排序算法有遍历、二分、二叉搜索树、哈希表，遍历的时间复杂度为O(n)，没有其他要求,二分的时间复杂度为O(log n)，要求有序,二叉搜索树的时间复杂度为O(log n)，要求有二叉搜索树的结构,哈希表的时间复杂度为O(1),要求有哈希表的结构。所以我们只能选择二分。
+由于发生了选择，需要找到旋转的位置，对该位置两段的两个数组分布进行二叉查找即可（其实也可以通过比较最大最小值进行预先判断减少二分次数）。
+
+```cpp
+int binarySearch(vector<int> &nums, int target) {
+    int iLeft = 0, iRight = nums.size() - 1, iMid = 0;
+    while (iLeft <= iRight) {
+        iMid = (iLeft + iRight) / 2;
+        if (nums.at(iMid) == target)
+            return iMid;
+        if (nums.at(iMid) < target) {
+            iLeft = iMid + 1;
+            continue;
+        }
+        else {
+            iRight = iMid - 1;
+            continue;
+        }
+    }
+    return -1;
+}
+int search(vector<int>& nums, int target) {
+    if (nums.empty())
+        return -1;
+    if (nums.size() == 1) {
+        if (nums.front() == target)
+            return 0;
+        else
+            return -1;
+    }
+    if (nums.back() > nums.front())
+        return binarySearch(nums, target);
+    int iRight = nums.size() - 1, iLeft = 0, iMid = (iRight + iLeft) / 2;
+    while (1) {
+        iMid = (iLeft + iRight) / 2;
+        if (nums.at(iMid) == target)
+            return iMid;
+        if (iMid == 0 || iMid == nums.size() - 1 || nums.at(iMid) < nums.at(iMid - 1)) {
+            break;
+        }
+        else {
+            if (nums.at(iMid) > nums.at(iRight)) {
+                iLeft = iMid + 1;
+                continue;
+            }
+            else {
+                iRight = iMid - 1;
+                continue;
+            }
+        }
+    }
+    if (iMid == 0)iMid = 1;
+    vector<int>temp(nums.begin(), nums.begin() + iMid);
+    vector<int>temp1(nums.begin() + iMid, nums.end());
+    int index = binarySearch(temp, target);
+    if (index != -1)
+        return index;
+    else {
+        index = binarySearch(temp1, target);
+        if (index != -1)
+            return iMid + index;
+        else
+            return -1;
+    }
+    return -1;
+}
+```
+
+# 34. 在排序数组中查找元素的第一个和最后一个位置
+
+给定一个按照升序排列的整数数组 nums，和一个目标值 target。找出给定目标值在数组中的开始位置和结束位置。
+
+你的算法时间复杂度必须是 O(log n) 级别。
+
+如果数组中不存在目标值，返回 [-1, -1]。
+
+示例 1:
+
+输入: nums = [5,7,7,8,8,10], target = 8
+输出: [3,4]
+示例 2:
+
+输入: nums = [5,7,7,8,8,10], target = 6
+输出: [-1,-1]
+
+题解：进行二分查找，如果能找到目标则向两边检索。最坏情况的时间复杂度为O(n)，一般情况为O(log n).
+
+```cpp
+int binarySearch(vector<int> &nums, int target) {
+    int iLeft = 0, iRight = nums.size() - 1, iMid = 0;
+    while (iLeft <= iRight) {
+        iMid = (iLeft + iRight) / 2;
+        if (nums.at(iMid) == target)
+            return iMid;
+        if (nums.at(iMid) < target) {
+            iLeft = iMid + 1;
+            continue;
+        }
+        else {
+            iRight = iMid - 1;
+            continue;
+        }
+    }
+    return -1;
+}
+vector<int> searchRange(vector<int>& nums, int target) {
+    int iIndex = binarySearch(nums, target);
+    vector<int>vAns = { -1,-1 };
+    if (iIndex == -1)
+        return vAns;
+    else {
+        int iLeft = iIndex, iRight = iIndex;
+        while (iLeft >= 0 && nums.at(iLeft) == target) {
+            vAns.front() = iLeft;
+            iLeft--;
+        }
+        while (iRight < nums.size() && nums.at(iRight) == target) {
+            vAns.back() = iRight;
+            iRight++;
+        }
+    }
+    return vAns;
+}
+```

@@ -1087,3 +1087,53 @@ for (auto iter = hmAll.begin(); iter != hmAll.end(); iter++) {
 }
 return vAns;
 ```
+
+# 53. 最大子序和
+
+给定一个整数数组 nums ，找到一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。
+
+示例:
+
+输入: [-2,1,-3,4,-1,2,1,-5,4],
+输出: 6
+解释: 连续子数组 [4,-1,2,1] 的和最大，为 6。
+
+题解：对连续子数组增长有益的只有正数，当一个子序的和已经小于0时就不再有增益的效果，抛弃该子序，进行下一子序的检索。时间复杂度为O(n).
+
+```cpp
+int maxSubArray(vector<int>& nums) {
+    if (nums.size() == 1)return nums.front();
+    vector<int> vMax, vTemp;
+    int iMax = nums.front(), iSum = 0;
+    for (int i = 0; i < nums.size(); i++) {
+        iSum += nums.at(i);
+        if (iSum > iMax) {
+            iMax = iSum;
+        }
+        if (iSum < 0) {
+            iSum = 0;
+            continue; 
+        }
+    }
+    return iMax;
+}
+```
+
+附上我看到的leecode上的一个题解，很喜欢这种清晰的代码，学习学习。
+
+```cpp
+class Solution {
+public:
+    int maxSubArray(vector<int>& nums) {
+        int sum = 0;
+        int res = nums[0];
+        for (int num : nums) {
+            sum = sum > 0 ? sum + num : num;
+            if (res < sum) {
+                res = sum;
+            }
+        }
+        return res;
+    }
+};
+```

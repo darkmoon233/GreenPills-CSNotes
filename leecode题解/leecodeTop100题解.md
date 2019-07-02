@@ -1137,3 +1137,114 @@ public:
     }
 };
 ```
+
+# 55. 跳跃游戏
+
+给定一个非负整数数组，你最初位于数组的第一个位置。
+
+数组中的每个元素代表你在该位置可以跳跃的最大长度。
+
+判断你是否能够到达最后一个位置。
+
+示例 1:
+
+输入: [2,3,1,1,4]
+输出: true
+解释: 从位置 0 到 1 跳 1 步, 然后跳 3 步到达最后一个位置。
+示例 2:
+
+输入: [3,2,1,0,4]
+输出: false
+解释: 无论怎样，你总会到达索引为 3 的位置。但该位置的最大跳跃长度是 0 ， 所以你永远不可能到达最后一个位置。
+
+题解：动态规划问题的核心在于判定解能否由之前的解组合而成。本题就是这样的例子。动态规划有两种思路，一是自顶向下，一是自下向上，自顶向下往往使用递归的方法，在建立自顶向下的过程中对过程中的所有解进行记录，自底向上的方法则是采用递推的方法，直接由初始状态进行逐项推进。
+
+解法1：自顶向下的递归。会超时。
+
+```cpp
+unordered_set<int> hsGood;
+bool canJump(vector<int>& nums, int index) {
+    if (hsGood.count(index))
+        return true;
+    bool flag = false;
+    for (int i = 1; i <= nums[index]; i++) {
+        flag = canJump(nums, index + i);
+        if (flag == true) {
+            hsGood.insert(index);
+            return true;
+        }
+    }
+    return false;
+}
+bool canJump1(vector<int>& nums) {
+    int iNear = nums.size() - 1;
+    if (nums.empty())
+        return false;
+    hsGood.insert(nums.size() - 1);
+    return canJump(nums, 0);
+}
+```
+
+解法2：自底向上的递推。
+
+```cpp
+unordered_set<int> hsGood;
+bool canJump(vector<int>& nums) {
+    int iNear = nums.size() - 1;
+    if (nums.empty())
+        return false;
+    hsGood.insert(nums.size() - 1);
+    for (int i = nums.size() - 2; i >= 0; i--) {
+        if (nums[i] >= iNear - i) {
+            iNear = i;
+            hsGood.insert(i);
+        }
+    }
+    if (hsGood.count(0))
+        return true;
+    else
+        return false;
+}
+```
+
+# 56. 合并区间
+
+给出一个区间的集合，请合并所有重叠的区间。
+
+示例 1:
+
+输入: [[1,3],[2,6],[8,10],[15,18]]
+输出: [[1,6],[8,10],[15,18]]
+解释: 区间 [1,3] 和 [2,6] 重叠, 将它们合并为 [1,6].
+示例 2:
+
+输入: [[1,4],[4,5]]
+输出: [[1,5]]
+解释: 区间 [1,4] 和 [4,5] 可被视为重叠区间。
+
+题解：排序+合并。思路很简单。事件复杂度值得注意的是c++的用细要求严格弱序，即 a>b 和 b>a 不能同时为真。 stl判断等价用的是 `!(a<b) && !(b<a)`。因此自定义的cmp函数需要严格遵守遮掩工单严格弱序关系，指明当两者相等时的处理结果，否则会提示`invalid comparator`错误。
+
+```cpp
+static bool cmp(vector<int>&a, vector<int> &b) {
+    if (a.front() >= b.front())
+        return false;
+    else
+        return true;
+}
+vector<vector<int>> merge(vector<vector<int>>& intervals) {
+    if (intervals.size() <= 1)return intervals;
+    sort(intervals.begin(), intervals.end(), cmp);
+    vector<vector<int>>vAns;
+    vAns.push_back(intervals.front());
+    for (vector<int> vInterval : intervals) {
+        if (vInterval.front() >= vAns.back().front() && vInterval.front() <= vAns.back().back()) {
+            vAns.back().back() = max(vInterval.back(), vAns.back().back());
+        }
+        else
+        {
+            vAns.push_back(vInterval);
+        }
+    }
+    return vAns;
+}
+```

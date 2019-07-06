@@ -1344,3 +1344,107 @@ int climbStairs(int n) {
 	return ans;
 }
 ```
+
+# 72. 编辑距离
+
+给定两个单词 word1 和 word2，计算出将 word1 转换成 word2 所使用的最少操作数 。
+
+你可以对一个单词进行如下三种操作：
+
+插入一个字符
+删除一个字符
+替换一个字符
+示例 1:
+
+输入: word1 = "horse", word2 = "ros"
+输出: 3
+解释: 
+horse -> rorse (将 'h' 替换为 'r')
+rorse -> rose (删除 'r')
+rose -> ros (删除 'e')
+示例 2:
+
+输入: word1 = "intention", word2 = "execution"
+输出: 5
+解释: 
+intention -> inention (删除 't')
+inention -> enention (将 'i' 替换为 'e')
+enention -> exention (将 'n' 替换为 'x')
+exention -> exection (将 'n' 替换为 'c')
+exection -> execution (插入 'u')
+
+并不知道这题如何处理，官方题解让我见识了什么叫从1+1到微积分。在leetcode网站上看到了jianchao-li写的题解，感觉很棒，简单搬运和修改了一下。
+
+题解：为应用动态规划，我们定义 `dp[i][j]` 为从 `word1[0..i)` 到`word2[0..j)`转换的的最小次数。
+
+对于基本的情况，将一个字符串转换为一个空的字符串，所需操作的最小值就是字符串长度本身，因此很明显： `dp[i][0]=i,dp[0][j]=j`
+对于一般情况，从 `word1[0..i)` 到 `word2[0..j)` ，假设我们已知了从 `word1[0..i-1)` 到 `word2[0..j-1)` 转换的次数，可以分两种情况讨论。
+1. if `word1[i] == word2[j]` 
+此时的的情况就不用多讲，直接`dp[i][j]=dp[i-1][j-1]`就可以了。
+2. if `word1[i] != word2[j]` 
+此时的情况比较复杂，有以下三种可能性。
+(1) 替换。如ror和ros，此时进行替换操作，r->s，此时`dp[i][j]=dp[i-1][j-1] + 1`;
+(2) 删除。如ross和ros，此时进行删除操作，delete s,此时`dp[i][j]=dp[i-1][j] + 1`
+(3) 插入。如ro和ros，此时进行插入操作，insert s,此时`dp[i][j]=dp[i][j-1] + 1`
+
+此时可以看出当`word1[i] != word2[j]` ，`dp[i][j] = min(dp[i][j]=dp[i-1][j-1] , dp[i][j]=dp[i][j-1] , dp[i][j]=dp[i-1][j]) + 1`
+
+自底向上的解法
+
+```cpp
+int minDistance(string word1, string word2) {
+	int m = word1.size(), n = word2.size();
+	vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
+	for (int i = 1; i <= m; i++) {
+		dp[i][0] = i;
+	}
+	for (int j = 1; j <= n; j++) {
+		dp[0][j] = j;
+	}
+	for (int i = 1; i <= m; i++) {
+		for (int j = 1; j <= n; j++) {
+			if (word1[i - 1] == word2[j - 1]) {
+				dp[i][j] = dp[i - 1][j - 1];
+			}
+			else {
+				dp[i][j] = min(dp[i - 1][j - 1], min(dp[i][j - 1], dp[i - 1][j])) +1;
+			}
+		}
+	}
+	return dp[m][n];
+}
+```
+75. 颜色分类
+
+给定一个包含红色、白色和蓝色，一共 n 个元素的数组，原地对它们进行排序，使得相同颜色的元素相邻，并按照红色、白色、蓝色顺序排列。
+
+此题中，我们使用整数 0、 1 和 2 分别表示红色、白色和蓝色。
+
+注意:
+不能使用代码库中的排序函数来解决这道题。
+
+示例:
+
+输入: [2,0,2,1,1,0]
+输出: [0,0,1,1,2,2]
+
+题解：我的思路是统计各个数值的量，然后在原数组的基础上重构它。这里引入了外部的一个map，不算是原地的方式。如果采用原地的，则是使用0指针和2指针来控制。
+
+```cpp
+void sortColors(vector<int>& nums) {
+	map<int, int>hmNums;
+	hmNums[0] = 0;
+	hmNums[1] = 0;
+	hmNums[2] = 0;
+	for (int i = 0; i < nums.size(); i++) {
+		hmNums[nums[i]]++;
+	}
+	int i = 0;
+	for (; i < hmNums[0]; i++)
+		nums[i] = 0;
+	for (; i < hmNums[0]+hmNums[1]; i++)
+		nums[i] = 1;
+	for (; i < nums.size(); i++)
+		nums[i] = 2;
+}
+```

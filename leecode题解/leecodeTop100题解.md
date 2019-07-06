@@ -1,4 +1,6 @@
 
+所有题目来源:力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/minimum-path-sum
 # 1. 两数之和
 
 给定一个整数数组 nums 和一个目标值 target，请你在该数组中找出和为目标值的那 两个 整数，并返回他们的数组下标。
@@ -1246,5 +1248,99 @@ vector<vector<int>> merge(vector<vector<int>>& intervals) {
         }
     }
     return vAns;
+}
+```
+# 64. 最小路径和
+给定一个包含非负整数的 m x n 网格，请找出一条从左上角到右下角的路径，使得路径上的数字总和为最小。
+
+说明：每次只能向下或者向右移动一步。
+
+示例:
+
+输入:
+[
+  [1,3,1],
+  [1,5,1],
+  [4,2,1]
+]
+输出: 7
+解释: 因为路径 1→3→1→1→1 的总和最小。
+
+题解：最小角的最小路径值只取决于他上方的元素左侧的元素那个更小.即f(i,j)=min(f(i-1,j)+data(i-1,j),f(i,j-1)+data(i,j-1))；所以可以用动态规划的方式解决，一种是自顶向下的递归方式，一种是自底向上的递推方式。
+
+递归方式：
+```cpp
+unordered_map<string, int> hmMin;
+int minPathSum(vector<vector<int>>& grid, int x, int y) {
+    string s = to_string(x) + "," + to_string(y);
+    if (hmMin.count(s))
+        return hmMin[s];
+    int ans = 0;
+    if (x == 0 && y == 0) {
+        ans = grid[0][0];
+    }
+    else if (x == 0) {
+        ans = minPathSum(grid, x, y - 1) + grid[x][y];
+    }
+    else if (y == 0) {
+        ans =  minPathSum(grid, x - 1, y) + grid[x][y];
+    }
+    else
+        ans= min(minPathSum(grid, x, y - 1) + grid[x][y], minPathSum(grid, x - 1, y) + grid[x][y]);
+    hmMin[s] = ans;
+    return ans;
+}
+int minPathSum(vector<vector<int>>& grid) {
+    if (grid.empty())
+        return 0;
+    int y = grid.front().size()-1;
+    int x = grid.size()-1;
+    return minPathSum(grid, x, y);
+}
+```
+# 70. 爬楼梯
+
+假设你正在爬楼梯。需要 n 阶你才能到达楼顶。
+
+每次你可以爬 1 或 2 个台阶。你有多少种不同的方法可以爬到楼顶呢？
+
+注意：给定 n 是一个正整数。
+
+示例 1：
+
+输入： 2
+输出： 2
+解释： 有两种方法可以爬到楼顶。
+1.  1 阶 + 1 阶
+2.  2 阶
+示例 2：
+
+输入： 3
+输出： 3
+解释： 有三种方法可以爬到楼顶。
+1.  1 阶 + 1 阶 + 1 阶
+2.  1 阶 + 2 阶
+3.  2 阶 + 1 阶
+
+
+题解：到达一个台阶有两种方式，一是从前一节台阶上来，一是从前两节台阶上来。因此到达第n个台阶的方式 = 到达n-1台阶的方式+到达n-2台阶的方式。用动态规划的思想可以解决。
+
+```cpp
+unordered_map<int, int> hmStairs;
+int climbStairs(int n) {
+	int ans = 0;
+	if (hmStairs.count(n))
+		return hmStairs[n];
+	else {
+		if (n > 1) {
+			ans = climbStairs(n - 1) + climbStairs(n - 2);
+		}
+		else if (n == 1)
+			ans = 1;
+		else if (n == 0)
+			ans = 1;
+	}
+	hmStairs[n] = ans;
+	return ans;
 }
 ```

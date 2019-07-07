@@ -76,6 +76,73 @@
     };
     ```
 
+# 2. 两数相加
+给出两个 非空 的链表用来表示两个非负的整数。其中，它们各自的位数是按照 逆序 的方式存储的，并且它们的每个节点只能存储 一位 数字。
+
+如果，我们将这两个数相加起来，则会返回一个新的链表来表示它们的和。
+
+您可以假设除了数字 0 之外，这两个数都不会以 0 开头。
+
+示例：
+
+输入：(2 -> 4 -> 3) + (5 -> 6 -> 4)
+输出：7 -> 0 -> 8
+原因：342 + 465 = 807
+
+题解：顺序相加，注意进位。还有一种方式是自动为不等长的链表补齐长度计算。
+```cpp
+ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
+	if (l1 == NULL)
+		return l2;
+	if (l2 == NULL)
+		return l1;
+	int jinwei = 0;
+	ListNode* head=NULL, * cur=NULL;
+	while (l1 != NULL && l2 != NULL) {
+		int num = (l1->val + l2->val + jinwei) % 10;
+		ListNode* temp = new ListNode(num);
+		jinwei = (l1->val + l2->val + jinwei) / 10;
+		if (head == NULL) {
+			head = temp;
+			cur = temp;
+		}
+		else {
+			cur->next = temp;
+			cur = temp;
+		}
+		l1 = l1->next;
+		l2 = l2->next;
+	}
+	if (l1 != NULL||l2 !=NULL) {
+		ListNode* unFinished;
+		if (l1 != NULL)
+			unFinished = l1;
+		else
+			unFinished = l2;
+		while (unFinished != NULL && jinwei) {
+			int num = (unFinished->val + jinwei) % 10;
+			ListNode* temp = new ListNode(num);
+			jinwei = (unFinished->val + jinwei) / 10;
+			cur->next = temp;
+			cur = temp;
+			unFinished = unFinished->next;
+		}
+		if (unFinished == NULL && jinwei) {
+			ListNode* temp = new ListNode(1);
+			cur->next = temp;
+		}
+		else
+			cur->next = unFinished;
+	}
+	else {
+		if (jinwei == 1) {
+			ListNode* temp = new ListNode(1);
+			cur->next = temp;
+		}
+	}
+	return head;
+}
+```
 # 3. 无重复字符的最长子串
 
 给定一个字符串，请你找出其中不含有重复字符的 最长子串 的长度。
@@ -291,6 +358,65 @@ string longestPalindrome(string s) {
     return s.substr(iPos, iMax);
 }
 ```
+# 10. 正则表达式匹配
+
+给你一个字符串 s 和一个字符规律 p，请你来实现一个支持 '.' 和 '*' 的正则表达式匹配。
+
+'.' 匹配任意单个字符
+'*' 匹配零个或多个前面的那一个元素
+所谓匹配，是要涵盖 整个 字符串 s的，而不是部分字符串。
+
+说明:
+
+s 可能为空，且只包含从 a-z 的小写字母。
+p 可能为空，且只包含从 a-z 的小写字母，以及字符 . 和 *。
+示例 1:
+
+输入:
+s = "aa"
+p = "a"
+输出: false
+解释: "a" 无法匹配 "aa" 整个字符串。
+示例 2:
+
+输入:
+s = "aa"
+p = "a*"
+输出: true
+解释: 因为 '*' 代表可以匹配零个或多个前面的那一个元素, 在这里前面的元素就是 'a'。因此，字符串 "aa" 可被视为 'a' 重复了一次。
+示例 3:
+
+输入:
+s = "ab"
+p = ".*"
+输出: true
+解释: ".*" 表示可匹配零个或多个（'*'）任意字符（'.'）。
+示例 4:
+
+输入:
+s = "aab"
+p = "c*a*b"
+输出: true
+解释: 因为 '*' 表示零个或多个，这里 'c' 为 0 个, 'a' 被重复一次。因此可以匹配字符串 "aab"。
+示例 5:
+
+输入:
+s = "mississippi"
+p = "mis*is*p*."
+输出: false
+
+分析：动态规划问题，因为有最优子结构（复杂的串可由前一状态推导）。分析可以知道有以下几种情况：
+（1）`p[j]==s[i]` 此时相当于只要两者的前序正确则本项就正确，即`dp[i][j]=dp[i-1][j-1]`
+(2)`p[j]=='.'` `,`是相当于任何一个字符，所以和上边的情况是完全一致的。`dp[i][j]=dp[i-1][j-1]`
+(3)`p[j]=='*'` '*'可以表示一个或者多个前一位的字符，这意味着他必须和前一位捆绑分析。有以下几种情况：
+    1. `p[j-1]!=s[i]` 相当于是*cover了0次`s[i]`.`dp[i][j] = dp[i][j-2]`
+    2. `p[j-1]==s[i] || p[j-1]=='.'`此时的情况有以下几种
+        (1) `*` cover了多次`s[i]` 此时`dp[i][j]=dp[i-1][j]`(不考虑cover了几次，逐渐向前推进)
+        (2) `*` cover了一次 's[i]` ,此时 `dp[i][j]=dp[i][j-1]`(相当于是和没有`*`是一样的）
+        (3) '*' cover了0次`s[i]`,此时`dp[i][j]=dp[i][j-2]`（相当于是两个符号都没用，这种情况可能出现在类似`a*a*`这样的组合当中）
+
+
+
 
 # 11. 盛最多水的容器
 
@@ -574,6 +700,61 @@ ListNode* removeNthFromEnd(ListNode* head, int n) {
         pBack->next = pBack->next->next;
     }
     return head;
+}
+```
+# 20. 有效的括号
+
+给定一个只包括 '('，')'，'{'，'}'，'['，']' 的字符串，判断字符串是否有效。可以通过预先建立hashmap的方式来确定左右括号的关系。
+
+有效字符串需满足：
+
+左括号必须用相同类型的右括号闭合。
+左括号必须以正确的顺序闭合。
+注意空字符串可被认为是有效字符串。
+
+示例 1:
+
+输入: "()"
+输出: true
+示例 2:
+
+输入: "()[]{}"
+输出: true
+示例 3:
+
+输入: "(]"
+输出: false
+示例 4:
+
+输入: "([)]"
+输出: false
+示例 5:
+
+输入: "{[]}"
+输出: true
+
+解法：利用栈，最近的正反括号必须匹配，正反括号数量必须相等。
+
+```cpp
+bool isValid(string s) {
+	stack<char> st;
+	for (char c : s) {
+		if (c == '(' || c == '[' || c == '{')
+			st.push(c);
+		else {
+			if (st.empty())
+				return false;
+			char cc = st.top();
+			if ((cc == '(' && c == ')') || (cc == '[' && c == ']') || (cc == '{' && c == '}'))
+				st.pop();
+			else
+				return false;
+		}
+	}
+	if (st.empty())
+		return true;
+	else
+		return false;
 }
 ```
 
@@ -1414,7 +1595,7 @@ int minDistance(string word1, string word2) {
 	return dp[m][n];
 }
 ```
-75. 颜色分类
+# 75. 颜色分类
 
 给定一个包含红色、白色和蓝色，一共 n 个元素的数组，原地对它们进行排序，使得相同颜色的元素相邻，并按照红色、白色、蓝色顺序排列。
 
@@ -1448,3 +1629,4 @@ void sortColors(vector<int>& nums) {
 		nums[i] = 2;
 }
 ```
+

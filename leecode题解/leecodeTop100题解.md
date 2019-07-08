@@ -415,7 +415,23 @@ p = "mis*is*p*."
         (2) `*` cover了一次 's[i]` ,此时 `dp[i][j]=dp[i][j-1]`(相当于是和没有`*`是一样的）
         (3) '*' cover了0次`s[i]`,此时`dp[i][j]=dp[i][j-2]`（相当于是两个符号都没用，这种情况可能出现在类似`a*a*`这样的组合当中）
 
-
+```cpp
+bool isMatch(string s, string p) {
+	vector<vector<bool>> dp(s.size() + 1, vector<bool>(p.size() + 1, false));
+	dp[0][0] = true;
+	for (int i = 0; i <= s.size(); i++) {
+		for (int j = 1; j <= p.size(); j++) {
+			if (p[j-1] == '*') {
+				dp[i][j] = dp[i][j - 2] || (i && dp[i - 1][j] && (s[i - 1] == p[j - 2] || p[j - 2] == '.'));
+			}
+			else {
+				dp[i][j] = i && dp[i - 1][j - 1] && (s[i - 1] == p[j - 1] || p[j - 1] == '.');
+			}
+		}
+	}
+	return dp[s.size()][p.size()];
+}
+```
 
 
 # 11. 盛最多水的容器
@@ -1630,3 +1646,40 @@ void sortColors(vector<int>& nums) {
 }
 ```
 
+# 121. 买卖股票的最佳时机
+
+给定一个数组，它的第 i 个元素是一支给定股票第 i 天的价格。
+
+如果你最多只允许完成一笔交易（即买入和卖出一支股票），设计一个算法来计算你所能获取的最大利润。
+
+注意你不能在买入股票前卖出股票。
+
+示例 1:
+
+输入: [7,1,5,3,6,4]
+输出: 5
+解释: 在第 2 天（股票价格 = 1）的时候买入，在第 5 天（股票价格 = 6）的时候卖出，最大利润 = 6-1 = 5 。
+     注意利润不能是 7-1 = 6, 因为卖出价格需要大于买入价格。
+示例 2:
+
+输入: [7,6,4,3,1]
+输出: 0
+解释: 在这种情况下, 没有交易完成, 所以最大利润为 0。
+
+
+题解：持续记录最大值和最小值的下标，当更新最小值的时候最大值也重置，因为不允许最小值的下标比最大值的下标大。
+```cpp
+int maxProfit(vector<int>& prices) {
+	int minIndex = 0, maxIndex = 0, maxValue = 0;
+	for (int i = 0; i < prices.size();i++) {
+		if (prices[i] < prices[minIndex]) {
+			minIndex = i;
+			maxIndex = i;
+		}
+		if (prices[i] > prices[maxIndex])
+			maxIndex = i;
+		maxValue = max(maxValue, prices[maxIndex] - prices[minIndex]);
+	}
+	return maxValue;
+} 
+```

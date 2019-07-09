@@ -1466,6 +1466,7 @@ vector<vector<int>> merge(vector<vector<int>>& intervals) {
 题解：最小角的最小路径值只取决于他上方的元素左侧的元素那个更小.即f(i,j)=min(f(i-1,j)+data(i-1,j),f(i,j-1)+data(i,j-1))；所以可以用动态规划的方式解决，一种是自顶向下的递归方式，一种是自底向上的递推方式。
 
 递归方式：
+
 ```cpp
 unordered_map<string, int> hmMin;
 int minPathSum(vector<vector<int>>& grid, int x, int y) {
@@ -1495,6 +1496,7 @@ int minPathSum(vector<vector<int>>& grid) {
     return minPathSum(grid, x, y);
 }
 ```
+
 # 70. 爬楼梯
 
 假设你正在爬楼梯。需要 n 阶你才能到达楼顶。
@@ -1508,16 +1510,18 @@ int minPathSum(vector<vector<int>>& grid) {
 输入： 2
 输出： 2
 解释： 有两种方法可以爬到楼顶。
-1.  1 阶 + 1 阶
-2.  2 阶
+
+1. 1 阶 + 1 阶
+2. 2 阶
 示例 2：
 
 输入： 3
 输出： 3
 解释： 有三种方法可以爬到楼顶。
-1.  1 阶 + 1 阶 + 1 阶
-2.  1 阶 + 2 阶
-3.  2 阶 + 1 阶
+
+1. 1 阶 + 1 阶 + 1 阶
+2. 1 阶 + 2 阶
+3. 2 阶 + 1 阶
 
 
 题解：到达一个台阶有两种方式，一是从前一节台阶上来，一是从前两节台阶上来。因此到达第n个台阶的方式 = 到达n-1台阶的方式+到达n-2台阶的方式。用动态规划的思想可以解决。
@@ -1525,20 +1529,20 @@ int minPathSum(vector<vector<int>>& grid) {
 ```cpp
 unordered_map<int, int> hmStairs;
 int climbStairs(int n) {
-	int ans = 0;
-	if (hmStairs.count(n))
-		return hmStairs[n];
-	else {
-		if (n > 1) {
-			ans = climbStairs(n - 1) + climbStairs(n - 2);
-		}
-		else if (n == 1)
-			ans = 1;
-		else if (n == 0)
-			ans = 1;
-	}
-	hmStairs[n] = ans;
-	return ans;
+    int ans = 0;
+    if (hmStairs.count(n))
+        return hmStairs[n];
+    else {
+        if (n > 1) {
+            ans = climbStairs(n - 1) + climbStairs(n - 2);
+        }
+        else if (n == 1)
+            ans = 1;
+        else if (n == 0)
+            ans = 1;
+    }
+    hmStairs[n] = ans;
+    return ans;
 }
 ```
 
@@ -1576,6 +1580,7 @@ exection -> execution (插入 'u')
 
 对于基本的情况，将一个字符串转换为一个空的字符串，所需操作的最小值就是字符串长度本身，因此很明显： `dp[i][0]=i,dp[0][j]=j`
 对于一般情况，从 `word1[0..i)` 到 `word2[0..j)` ，假设我们已知了从 `word1[0..i-1)` 到 `word2[0..j-1)` 转换的次数，可以分两种情况讨论。
+
 1. if `word1[i] == word2[j]` 
 此时的的情况就不用多讲，直接`dp[i][j]=dp[i-1][j-1]`就可以了。
 2. if `word1[i] != word2[j]` 
@@ -1590,27 +1595,28 @@ exection -> execution (插入 'u')
 
 ```cpp
 int minDistance(string word1, string word2) {
-	int m = word1.size(), n = word2.size();
-	vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
-	for (int i = 1; i <= m; i++) {
-		dp[i][0] = i;
-	}
-	for (int j = 1; j <= n; j++) {
-		dp[0][j] = j;
-	}
-	for (int i = 1; i <= m; i++) {
-		for (int j = 1; j <= n; j++) {
-			if (word1[i - 1] == word2[j - 1]) {
-				dp[i][j] = dp[i - 1][j - 1];
-			}
-			else {
-				dp[i][j] = min(dp[i - 1][j - 1], min(dp[i][j - 1], dp[i - 1][j])) +1;
-			}
-		}
-	}
-	return dp[m][n];
+    int m = word1.size(), n = word2.size();
+    vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
+    for (int i = 1; i <= m; i++) {
+        dp[i][0] = i;
+    }
+    for (int j = 1; j <= n; j++) {
+        dp[0][j] = j;
+    }
+    for (int i = 1; i <= m; i++) {
+        for (int j = 1; j <= n; j++) {
+            if (word1[i - 1] == word2[j - 1]) {
+                dp[i][j] = dp[i - 1][j - 1];
+            }
+            else {
+                dp[i][j] = min(dp[i - 1][j - 1], min(dp[i][j - 1], dp[i - 1][j])) +1;
+            }
+        }
+    }
+    return dp[m][n];
 }
 ```
+
 # 75. 颜色分类
 
 给定一个包含红色、白色和蓝色，一共 n 个元素的数组，原地对它们进行排序，使得相同颜色的元素相邻，并按照红色、白色、蓝色顺序排列。
@@ -1629,20 +1635,20 @@ int minDistance(string word1, string word2) {
 
 ```cpp
 void sortColors(vector<int>& nums) {
-	map<int, int>hmNums;
-	hmNums[0] = 0;
-	hmNums[1] = 0;
-	hmNums[2] = 0;
-	for (int i = 0; i < nums.size(); i++) {
-		hmNums[nums[i]]++;
-	}
-	int i = 0;
-	for (; i < hmNums[0]; i++)
-		nums[i] = 0;
-	for (; i < hmNums[0]+hmNums[1]; i++)
-		nums[i] = 1;
-	for (; i < nums.size(); i++)
-		nums[i] = 2;
+    map<int, int>hmNums;
+    hmNums[0] = 0;
+    hmNums[1] = 0;
+    hmNums[2] = 0;
+    for (int i = 0; i < nums.size(); i++) {
+        hmNums[nums[i]]++;
+    }
+    int i = 0;
+    for (; i < hmNums[0]; i++)
+        nums[i] = 0;
+    for (; i < hmNums[0]+hmNums[1]; i++)
+        nums[i] = 1;
+    for (; i < nums.size(); i++)
+        nums[i] = 2;
 }
 ```
 
@@ -1666,20 +1672,149 @@ void sortColors(vector<int>& nums) {
 输出: 0
 解释: 在这种情况下, 没有交易完成, 所以最大利润为 0。
 
-
 题解：持续记录最大值和最小值的下标，当更新最小值的时候最大值也重置，因为不允许最小值的下标比最大值的下标大。
+
 ```cpp
 int maxProfit(vector<int>& prices) {
-	int minIndex = 0, maxIndex = 0, maxValue = 0;
-	for (int i = 0; i < prices.size();i++) {
-		if (prices[i] < prices[minIndex]) {
-			minIndex = i;
-			maxIndex = i;
-		}
-		if (prices[i] > prices[maxIndex])
-			maxIndex = i;
-		maxValue = max(maxValue, prices[maxIndex] - prices[minIndex]);
-	}
-	return maxValue;
-} 
+    int minIndex = 0, maxIndex = 0, maxValue = 0;
+    for (int i = 0; i < prices.size();i++) {
+        if (prices[i] < prices[minIndex]) {
+            minIndex = i;
+            maxIndex = i;
+        }
+        if (prices[i] > prices[maxIndex])
+            maxIndex = i;
+        maxValue = max(maxValue, prices[maxIndex] - prices[minIndex]);
+    }
+    return maxValue;
+}
+```
+
+# 78. 子集
+
+给定一组不含重复元素的整数数组 nums，返回该数组所有可能的子集（幂集）。
+
+说明：解集不能包含重复的子集。
+
+示例:
+
+输入: nums = [1,2,3]
+输出:
+[
+  [3],
+  [1],
+  [2],
+  [1,2,3],
+  [1,3],
+  [2,3],
+  [1,2],
+  []
+]
+
+题解：可以通过一种类似动态规划的思想考虑，即从 [] 开始，每次向其添加一个元素，生成一个新的集合，再在这个集合的基础上进行在增加一个元素，当然这个过程要保证不重复。还有一种基于位的考虑，比如一个 [1,2,3],可以通过对一个000的三位数二进制数进行枚举，每一个1对应选取，0对应不选，就可以判断出所有的情况。
+
+```cpp
+vector<vector<int>> subsets(vector<int>& nums) {
+    vector<vector<int>> vAns;
+    unordered_map<int, int> hmNums;
+    for (int i = 0; i < nums.size(); i++){
+        hmNums[nums[i]] = i;
+    }
+    int iStartIndex = 0, iEndIndex = 1,iCount=0;
+    for (int i = 0; i <= nums.size(); i++) {
+        if (i == 0) {
+            vAns.push_back(vector<int>());
+            continue;
+        }
+        else {
+            for (int j = iStartIndex; j < iEndIndex; j++) {
+                if (vAns[j].empty()) {
+                    for (int k = 0; k < nums.size(); k++) {
+                        vector<int> temp = vAns[j];
+                        temp.push_back(nums[k]);
+                        vAns.push_back(temp);
+                        iCount++;
+                    }
+                }
+                else {
+                    for (int k = hmNums[vAns[j].back()] + 1; k < hmNums.size(); k++) {
+                        vector<int> temp = vAns[j];
+                        temp.push_back(nums[k]);
+                        vAns.push_back(temp);
+                        iCount++;
+                    }
+                }
+            }
+        }
+        iStartIndex = iEndIndex;
+        iEndIndex += iCount;
+        iCount = 0;
+    }
+    return vAns;
+}
+```
+
+# 79. 单词搜索
+
+给定一个二维网格和一个单词，找出该单词是否存在于网格中。
+
+单词必须按照字母顺序，通过相邻的单元格内的字母构成，其中“相邻”单元格是那些水平相邻或垂直相邻的单元格。同一个单元格内的字母不允许被重复使用。
+
+示例:
+
+board =
+[
+  ['A','B','C','E'],
+  ['S','F','C','S'],
+  ['A','D','E','E']
+]
+
+给定 word = "ABCCED", 返回 true.
+给定 word = "SEE", 返回 true.
+给定 word = "ABCB", 返回 false.
+
+题解：通过深度优先搜索的方式进行查询，记忆历史路径防止踩到来过的点，每次判断自己四周的四个点是否是目标点，如果是则进行进一步的搜索。`my code is ugly！`
+
+```cpp
+unordered_map<char, vector<pair<int, int>>> hmBoard;
+bool find(vector<vector<char>>& board,string &word, int curIndex,set<pair<int,int>> sGone,pair<int,int>p) {
+    if (curIndex == word.size()-1)
+        return true;
+        sGone.insert(p);
+        pair<int, int>p1=p, p2=p, p3=p, p4=p;
+        p1.first -= 1;
+        p2.second += 1;
+        p3.first += 1;
+        p4.second -= 1;
+        if (!sGone.count(p1)&&p1.first >= 0 && p1.first < board.size() && p1.second >= 0 && p1.second < board.front().size()&&board[p1.first][p1.second]==word[curIndex+1]) {
+            if( find(board, word, curIndex+1, sGone,p1))
+                return true;
+        }
+        if (!sGone.count(p2) && p2.first >= 0 && p2.first < board.size() && p2.second >= 0 && p2.second < board.front().size() && board[p2.first][p2.second] == word[curIndex + 1]) {
+            if (find(board, word, curIndex + 1, sGone, p2))
+                return true;
+        }
+        if (!sGone.count(p3) && p3.first >= 0 && p3.first < board.size() && p3.second >= 0 && p3.second < board.front().size() && board[p3.first][p3.second] == word[curIndex + 1]) {
+            if (find(board, word, curIndex + 1, sGone, p3))
+                return true;
+        }
+        if (!sGone.count(p4) && p4.first >= 0 && p.first < board.size() && p4.second >= 0 && p4.second < board.front().size() && board[p4.first][p4.second] == word[curIndex + 1]) {
+            if (find(board, word, curIndex + 1, sGone, p4))
+                return true;
+        }
+        return false;
+
+}
+bool exist(vector<vector<char>>& board, string word) {
+    for (int i = 0; i < board.size(); i++) {
+        for (int j = 0; j < board[i].size(); j++) {
+            hmBoard[board[i][j]].push_back(pair<int, int>(i, j));
+        }
+    }
+    for (pair<int, int> p : hmBoard[word.front()]) {
+        if (find(board, word, 0, set<pair<int, int>>(),p))
+            return true;
+    }
+    return false;
+}
 ```

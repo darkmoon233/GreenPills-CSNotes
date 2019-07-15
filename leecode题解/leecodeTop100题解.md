@@ -1818,3 +1818,109 @@ bool exist(vector<vector<char>>& board, string word) {
     return false;
 }
 ```
+
+# 94. 二叉树的中序遍历
+
+给定一个二叉树，返回它的中序 遍历。
+
+示例:
+
+输入: [1,null,2,3]
+   1
+    \
+     2
+    /
+   3
+
+输出: [1,3,2]
+
+题解1：递归的思路很简单，按照左子树，中间，右子树的顺序进行即可。
+
+```cpp
+struct TreeNode {
+    int val;
+    TreeNode* left;
+    TreeNode* right;
+    TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+};
+vector<int> ans;
+void write(TreeNode* root) {
+    if (root->left != NULL)
+        inorderTraversal(root->left);
+    ans.push_back(root->val);
+    if ((root->right != NULL))
+        inorderTraversal(root->right);
+}
+vector<int> inorderTraversal(TreeNode* root) {
+    if (root == NULL)
+        return vector<int>();
+    write(root);
+    return ans;
+}
+```
+
+题解2： 非递归的方法，通过栈的思路实现，每次将当前节点入栈，如果当前节点有左子树，就令左节点为当前节点，如果没有，就先输出，再从栈顶取元素，当做当前节点。直到当前节点和栈都为空时结束。
+
+```cpp
+vector<int> inorderTraversal(TreeNode* root) {
+    if (root == NULL)
+        return vector<int>();
+    vector<int> ans;
+
+    stack<TreeNode*> sT;
+    TreeNode* curNode = root;
+    while (curNode != NULL || !sT.empty()) {
+        while (curNode != NULL) {
+            sT.push(curNode);
+            curNode = curNode->left;
+        }
+        ans.push_back(sT.top()->val);
+        curNode = sT.top();
+        sT.pop();
+        curNode = curNode->right;
+    }
+    return ans;
+}
+```
+
+# 96. 不同的二叉搜索树
+
+给定一个整数 n，求以 1 ... n 为节点组成的二叉搜索树有多少种？
+
+示例:
+
+输入: 3
+输出: 5
+解释:
+给定 n = 3, 一共有 5 种不同结构的二叉搜索树:
+
+   1         3     3      2      1
+    \       /     /      / \      \
+     3     2     1      1   3      2
+    /     /       \                 \
+   2     1         2                 3
+
+题解：感觉上是可以用dp解决的。因为当根确定时，左子树和右子树的节点内容就是确定的了。可以遍历1-n来做根节点，求和就是总的种类数目。
+设G(n)表示有n个节点时二叉树的种类。F(i,n)表示n个节点时，i做根节点时的种类数目。
+G(n) = ∑F(i,n),i∈[1,...,n]
+F(i,n) = G(i-1)*G(n-i)
+因此：G(n) = ∑G(i-1)*G(n-i) , i∈[1,...,n]
+
+```cpp
+int numTrees(int n) {
+    if (n <= 1)return 1;
+    unordered_map<int, int>hm;
+    hm[0] = 1;
+    hm[1] = 1;
+    int iIndex = 2;
+    while (iIndex <= n) {
+        for (int i = 0; i < iIndex; i++) {
+            hm[iIndex] += hm[i] * hm[iIndex - 1 - i];
+        }
+        iIndex++;
+    }
+    return hm[n];
+}
+```
+
+

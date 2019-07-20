@@ -1950,7 +1950,7 @@ int numTrees(int n) {
     解释: 输入为: [5,1,4,null,null,3,6]。
          根节点的值为 5 ，但是其右子节点值为 4 。
 
-题解：规则非常明确，需要判定的项是左子，右子是否满足小于和大于的规则。更进一步的条件是整个左子树小于根，整个右子树大于根，这就要求根节点的数值必须能传递到对应的判定位置，因此每个节点都会有一个范围的限制，是左节点的，根节点是最大值，同时也要大于根节点范围的最小值，是右节点的，根节点是最小值，同时也要小于根节点范围的最大值，相当于是逐步更新每一个节点的范围。
+题解：规则非常明确，需要判定的项是左子，右子是否满足小于和大于的规则。更进一步的条件是整个左子树小于根，整个右子树大于根，这就要求根节点的数值必须能传递到对应的判定位置，因此每个节点都会有一个范围的限制，是左节点的，根节点是最大值，同时也要大于根节点范围的最小值，是右节点的，根节点是最小值，同时也要小于根节点范围的最大值，相当于是逐步更新每一个节点的范围。（一种基于中序遍历的思路很棒，二叉搜索数在中序遍历上会是个升序排列的有序数组）。
 
 ```cpp
 struct TreeNode {
@@ -1978,5 +1978,70 @@ bool isValidBST(TreeNode* root) {
             return isBST(root->right, LONG_MAX, root->val);
     }
     return false;
+}
+```
+
+# 101. 对称二叉树
+
+    给定一个二叉树，检查它是否是镜像对称的。
+
+    例如，二叉树 [1,2,2,3,4,4,3] 是对称的。
+
+        1
+    / \
+    2   2
+    / \ / \
+    3  4 4  3
+    但是下面这个 [1,2,2,null,3,null,3] 则不是镜像对称的:
+
+        1
+    / \
+    2   2
+    \   \
+    3    3
+    说明:
+
+    如果你可以运用递归和迭代两种方法解决这个问题，会很加分。
+
+题解：对称二叉树的关键在于有两个镜像的左右子树，可以逐层判断是否符合镜像的条件，设定两个栈，一个保存当前层节点，一个保存下一层的节点，当两个栈都为空时相当于比较完成，期间发生了不对称的情况则认为不对称。
+
+```cpp
+bool isSymmetric(TreeNode* root) {
+    if (root == NULL)
+        return true;
+
+    stack<TreeNode*> stLeft, stLeftTemp;
+    stack<TreeNode*> stRight, stRightTemp;
+
+    stLeft.push(root->left);
+    stRight.push(root->right);
+
+    while (!stLeft.empty() || !stLeftTemp.empty()) {
+        while (!stLeft.empty()) {
+            if ((stLeft.top() == NULL && stRight.top() != NULL) || (stLeft.top() != NULL && stRight.top() == NULL))
+                return false;
+            if ((stLeft.top() == NULL && stRight.top() == NULL) || (stLeft.top()->val == stRight.top()->val)) {
+                if (stLeft.top() != NULL) {
+                    stLeftTemp.push(stLeft.top()->left);
+                    stLeftTemp.push(stLeft.top()->right);
+                    stLeft.pop();
+                    stRightTemp.push(stRight.top()->right);
+                    stRightTemp.push(stRight.top()->left);
+                    stRight.pop();
+                }
+                else {
+                    stLeft.pop();
+                    stRight.pop();
+
+                }
+            }
+            else {
+                return false;
+            }
+        }
+        swap(stLeft, stLeftTemp);
+        swap(stRight, stRightTemp);
+    }
+    return true;
 }
 ```

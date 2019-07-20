@@ -1923,4 +1923,60 @@ int numTrees(int n) {
 }
 ```
 
+# 98. 验证二叉搜索树
 
+    给定一个二叉树，判断其是否是一个有效的二叉搜索树。
+    假设一个二叉搜索树具有如下特征：
+
+    节点的左子树只包含小于当前节点的数。
+    节点的右子树只包含大于当前节点的数。
+    所有左子树和右子树自身必须也是二叉搜索树。
+    示例 1:
+
+    输入:
+        2
+    / \
+    1   3
+    输出: true
+    示例 2:
+
+    输入:
+        5
+    / \
+    1   4
+         / \
+        3   6
+    输出: false
+    解释: 输入为: [5,1,4,null,null,3,6]。
+         根节点的值为 5 ，但是其右子节点值为 4 。
+
+题解：规则非常明确，需要判定的项是左子，右子是否满足小于和大于的规则。更进一步的条件是整个左子树小于根，整个右子树大于根，这就要求根节点的数值必须能传递到对应的判定位置，因此每个节点都会有一个范围的限制，是左节点的，根节点是最大值，同时也要大于根节点范围的最小值，是右节点的，根节点是最小值，同时也要小于根节点范围的最大值，相当于是逐步更新每一个节点的范围。
+
+```cpp
+struct TreeNode {
+    int val;
+    TreeNode* left;
+    TreeNode* right;
+    TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+};
+
+bool isBST(TreeNode* cur, long max, long min) {
+    if (cur == NULL)
+        return true;
+    if (cur->val<max && cur->val>min) {
+        if (isBST(cur->left, cur->val, min))
+            return isBST(cur->right, max, cur->val);
+    }
+    return false;
+}
+
+bool isValidBST(TreeNode* root) {
+    if (root == NULL)
+        return true;
+    else {
+        if (isBST(root->left, root->val, LONG_MIN))
+            return isBST(root->right, LONG_MAX, root->val);
+    }
+    return false;
+}
+```

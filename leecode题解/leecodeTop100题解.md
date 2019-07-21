@@ -1,6 +1,7 @@
 
 所有题目来源:力扣（LeetCode）
-链接：https://leetcode-cn.com/problems/minimum-path-sum
+链接：<https://leetcode-cn.com/problems/minimum-path-sum>
+
 # 1. 两数之和
 
 给定一个整数数组 nums 和一个目标值 target，请你在该数组中找出和为目标值的那 两个 整数，并返回他们的数组下标。
@@ -2043,5 +2044,105 @@ bool isSymmetric(TreeNode* root) {
         swap(stRight, stRightTemp);
     }
     return true;
+}
+```
+
+# 102. 二叉树的层次遍历
+
+    给定一个二叉树，返回其按层次遍历的节点值。 （即逐层地，从左到右访问所有节点）。
+
+    例如:
+    给定二叉树: [3,9,20,null,null,15,7],
+
+        3
+    / \
+    9  20
+        /  \
+    15   7
+    返回其层次遍历结果：
+
+    [
+    [3],
+    [9,20],
+    [15,7]
+    ]
+
+题解：层序遍历的关键点就在于逐层下降，用上一层的信息来提前控制下一层的数据。在这里我是用了两个队列分别保存当前层和一下层，这样可以方便的控制每层的数据，当然也可只用一个队列，顺序放入就行，但是需要对分层进行判断。
+
+```cpp
+vector<vector<int>> levelOrder(TreeNode* root) {
+    vector<vector<int>> ans;
+    if (root == NULL)
+        return ans;
+    queue<TreeNode*> qTree, qTreetemp;
+    qTree.push(root);
+    while (!qTree.empty() || !qTreetemp.empty()) {
+        vector<int> temp;
+        while (!qTree.empty()) {
+            temp.push_back(qTree.front()->val);
+            if (qTree.front()->left != NULL)
+                qTreetemp.push(qTree.front()->left);
+            if (qTree.front()->right != NULL)
+                qTreetemp.push(qTree.front()->right);
+            qTree.pop();
+        }
+        ans.push_back(temp);
+        swap(qTree, qTreetemp);
+    }
+    return ans;
+}
+```
+
+# 104. 二叉树的最大深度
+
+    给定一个二叉树，找出其最大深度。
+
+    二叉树的深度为根节点到最远叶子节点的最长路径上的节点数。
+
+    说明: 叶子节点是指没有子节点的节点。
+
+    示例：
+    给定二叉树 [3,9,20,null,null,15,7]，
+
+        3
+    / \
+    9  20
+        /  \
+    15   7
+    返回它的最大深度 3 。
+
+题解1：其实求深度无非是深度优先遍历或者广度优先遍历。我们先用广度优先的方式逐层下降找一下（其实和前两道用到时一种方法），用两个队列来逐层下降。
+
+```cpp
+int maxDepth(TreeNode* root) {
+    if (root == NULL)
+        return 0;
+    int max = 0;
+    queue<TreeNode*> qTree, qTreetemp;
+    qTree.push(root);
+    while (!qTree.empty() || !qTreetemp.empty()) {
+        vector<int> temp;
+        while (!qTree.empty()) {
+            temp.push_back(qTree.front()->val);
+            if (qTree.front()->left != NULL)
+                qTreetemp.push(qTree.front()->left);
+            if (qTree.front()->right != NULL)
+                qTreetemp.push(qTree.front()->right);
+            qTree.pop();
+        }
+        max++;
+        swap(qTree, qTreetemp);
+    }
+    return max;
+}
+```
+
+题解2：深度优先搜索。我们这里用递归的方式，一个节点的深度=max（左子树深度，右子树深度）+1.
+
+```cpp
+int maxDepth(TreeNode* root) {
+    if (root == NULL)
+        return 0;
+    return max(maxDepth(root->left), maxDepth(root->right)) + 1;
 }
 ```

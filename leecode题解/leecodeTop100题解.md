@@ -571,7 +571,7 @@ return vTotalNums;
 
 给出数字到字母的映射如下（与电话按键相同）。注意 1 不对应任何字母。
 
-![phoneNumber](https://github.com/darkmoon233/GreenPills-CSNotes/blob/master/images/leecode17phonenumber.png)
+![phoneNumber](https://pinkpills-1259674611.cos.ap-shanghai.myqcloud.com/pinkpill/images/leecode17phonenumber.png)
 
 示例:
 

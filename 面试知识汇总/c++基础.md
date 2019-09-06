@@ -875,3 +875,5 @@ int main()
 ```
 
 参考<https://zh.cppreference.com/w/cpp/language/explicit>
+
+# dynamic_cast 转换失败
